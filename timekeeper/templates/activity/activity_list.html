@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block body %}
+    <ul>
+    {% for activity in content %}
+        <li>{{ activity.title }}</li>
+    {% endfor %}
+    </ul>
+{% endblock %}

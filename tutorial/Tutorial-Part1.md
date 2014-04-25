@@ -188,34 +188,36 @@ Without passing a particular ID, our system should respond by giving us all piec
 
 `http://example.com/place/123`
 
-We would expect that these would both respond in similar ways, retrieving a list of books in our application, or one particular book. This architecture is the first component of a RESTful system.
+We would expect that these would both respond in similar ways, retrieving a list of places in our application, or one particular place. This architecture is the first component of a RESTful system.
 
-You may have noticed, however, that there are two parts missing from this. We can retrieve a book, but what if we want to edit an existing book? Or delete a piece? In our previous examples there was an "&action=" query parameter that passed this in; however, this has gone missing from our RESTful examples.
+You may have noticed, however, that there are two parts missing from this. We can retrieve a place, but what if we want to edit an existing place? Or delete a place? In our previous examples there was an "&action=" query parameter that passed this in; however, this has gone missing from our RESTful examples. We will address this next.
 
 ## Verbs
 
-Most web clients operate over the HTTP protocol. This protocol provides several actions to be sent with a request (which we will call "verbs"). Two of these will be familiar with you if you have done any form processing on the web, while the other two will likely not:
+All web clients operate over the HyperText Transfer Protocol. This protocol is stateless, meaning that for each request, enough information must be sent from the client to the server so that the server can fulfill the request -- no context information about a client is "stored" on the server. To send this information, a HTTP request contains several "header" fields that describe the client and the nature of the content being requested.
+
+One of the most important request parameters is the action that is sent with a request (which we will call "verbs"). Two of these will be familiar with you if you have done any form processing on the web, while the other two will likely not:
 
  * `GET`
  * `POST`
  * `PATCH` (`PUT`)
  * `DELETE`
 
-In a retrieval context, most requests are handled by the `GET` verb. This tells the server to retrieve the resource identified at a particular URL. The important thing to recognize about using `GET` is that it should *never* change the state of the resources on the server. You must never pass in commands that will alter or remove resources on the server.
+Most requests use the `GET` verb. This tells the server that the client is asking to retrieve the resource identified at a particular URL. The important thing to recognize about using `GET` is that it should *never* change the state of the resources on the server. You must never pass in commands that will alter or remove resources on the server using the GET method.
 
 So our first example can be rewritten as:
 
-`GET http://example.com/piece/123`
+`GET http://example.com/place/123`
 
 We will skip `POST` for a moment and discuss `PATCH` and `DELETE`. These are used to sent commands for editing ("PATCHing") a record, and deleting a record. This is applied rather intuitively:
 
-`PATCH http://example.com/piece/123`
+`PATCH http://example.com/place/123`
 
-`DELETE http://example.com/piece/123`
+`DELETE http://example.com/place/123`
 
 Similarly, if you wanted to delete all pieces you could send a request to the collection level:
 
-`DELETE http://example.com/piece/`
+`DELETE http://example.com/place/`
 
 With `PATCH` requests we must also send along the data that is used to edit the record. This is done in the "body" of the request, which we will look at later, but for now just imagine that it is like an e-mail attachment.
 
@@ -225,25 +227,25 @@ Finally, `POST` is used to create a record. This is typically done by sending a 
 
 Like `PATCH`, the data used to create the record with a POST request is sent along in the body of the request.
 
-As you can see, `PATCH`, `DELETE`, and `POST` can all have negative effects on your data for deleting or altering your data, while `GET` requests, beyond allowing people to see a record, cannot change the state of the server. If you design a system such that no data on the server can be altered with a `GET` request, it is easier to guard against unauthorized access to your servers.
+As you can see, `PATCH`, `DELETE`, and `POST` can all have negative effects on your data for deleting or altering your data, while `GET` requests, beyond allowing people to see a record, cannot change the state of the server. If you design a system such that no data on the server can be altered with a `GET` request, and that `PATCH`, `DELETE`, and `POST` requests are only allowed by authorized users, it is easier to guard against unauthorized access to your application.
 
-### Searching
+### Searching and Filtering
 
-One valid use of query parameters is for searching a collection of objects. For example:
+One use of query parameters is for searching a collection of objects. For example:
 
-`http://example.com/piece/?title=amour`
+`http://example.com/place/?title=home`
 
-might retrieve only those pieces that have the word "Amour" in the title. Multiple facets could be combined to further restrict this:
+might retrieve only those places that have the word "home" in the title. Multiple facets could be combined to further restrict this:
 
-`http://example.com/piece/?title=amour&final=d`
+`http://example.com/activities/?place=home&time=10:00`
 
-might retrieve all pieces that have the word "amour" in their title AND end on a D.
+might retrieve all activities that took place at home at 10am.
 
 ## Response types
 
 The third component to our RESTful architecture is the response type. In our non-REST examples, we needed to pass in `&format=html` or `&format=json` to identify which format we would like to recieve our response in. However, like the Verbs, the HTTP protocol has a built-in mechanism for content negotiation, the `Accepts` header.
 
-To understand the request header, we will use the cURL tool. This is a powerful command-line utility that allows us to query a URL and receive a response in our terminal. This will become an important part of our toolbox as we build our API, so let's see how it works. I will pass in a simple command to retrieve the Google homepage using the GET method:
+To understand and view request headers, we will use the cURL tool. This is a powerful command-line utility that allows us to query a URL and receive a response in our terminal. This will become an important part of our toolbox as we build our API, so let's see how it works. I will pass in a simple command to retrieve the Google homepage using the GET method:
 
 `curl -XGET -L http://google.com`
 
@@ -291,7 +293,7 @@ Lines marked with an ">" indicate a *request* header; lines marked with a "<" in
 
 Notice here that one of the request headers is the `Accept:` header. A `*/*` indicates that our client will accept all types of responses. The corresponding response header is the `Content-Type:` header, which tells our client that the server is responding with a content type of `text/html; charset=utf-8`.
 
-Using the `Accept:` header we can alert a server to the content type our client is willing to accept. If we supply `application/json` as the mimetype for an accept header, a properly-configured web service would serve back JSON-encoded responses. Similarly, an `Accept:` request for `text/html` would allow a server to respond with HTML. Fortunately all modern web browsers send this Accept type by default, so users browsing normally will not notice a difference.
+Using the `Accept:` header we can alert a server to the content type our client is willing to accept. This is specified using mimetypes: unique identifiers that identify a certain computer format. If we supply `application/json` as the mimetype for an accept header, a properly-configured web service would serve back a JSON-encoded response. Similarly, an `Accept:` request for `text/html` would tell the server to respond with HTML. Fortunately all modern web browsers send this Accept type by default, so users browsing normally will not notice this process.
 
 Now that we know what we're building, let's go build it!
 
@@ -301,24 +303,22 @@ Now that we know what we're building, let's go build it!
 
 You typically start development by writing the database models. These will identify and store the data that we will use to populate our website with content.
 
-Start by creating three files in your `models` directory, one for each model we will write: `book.py`, `piece.py`, and `phrase.py`. You should always use the singular form for naming models.
+Start by creating three files in your `models` directory, one for each model we will write: `activity.py`, `place.py`, and `person.py`. You should always use the singular form for naming models.
 
-Let's start with the Book model. In `book.py` add the following code. Make sure you read it and understand what's going on before copying and pasting.
+Let's start with the Activity model. In `activity.py` add the following code. Make sure you read it and understand what's going on before copying and pasting.
 
 ```
 from django.db import models
 
-class Book(models.Model):
+class Activity(models.Model):
     class Meta:
-        app_label = "goudimel"
+        app_label = "timekeeper"
 
     title = models.CharField(max_length=255, blank=True, null=True)
-    publisher = models.CharField(max_length=255, blank=True, null=True)
-    published = models.DateField(blank=True, null=True)
-    rism_id = models.CharField(max_length=16, blank=True, null=True)
-    cesr_id = models.CharField(max_length=16, blank=True, null=True)
-    remarks = models.CharField(max_length=128, blank=True, null=True)
-    num_pages = models.IntegerField(blank=True, null=True)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    location = models.ForeignKey("timekeeper.Place")
+    partner = models.ForeignKey("timekeeper.Person", blank=True, null=True)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -331,102 +331,94 @@ If you are familiar with Django models, this looks pretty straightforward. There
 
 The `__unicode__` method determines what field Django uses to describe each model instance to the user. We've chosen the `title` field. This will make it easier to identify each model in the Django admin interface.
 
-We will do the same thing for Pieces and Phrases now.
+We will do the same thing for Person and Place now.
 
-piece.py:
-
-```
-from django.db import models
-
-class Piece(models.Model):
-    class Meta:
-        app_label = "goudimel"
-
-    book_id = models.ForeignKey("goudimel.Book")
-    title = models.CharField(max_length=64, blank=True, null=True)
-    composer_src = models.CharField(max_length=64, blank=True, null=True)
-    forces = models.CharField(max_length=16, blank=True, null=True)
-    print_concordances = models.CharField(max_length=128, blank=True, null=True)
-    ms_concordances = models.CharField(max_length=128, blank=True, null=True)
-    pdf_link = models.URLField(max_length=255, blank=True, null=True)
-
-    def __unicode__(self):
-        return u"{0}".format(self.title)
-```
-
-phrase.py:
+person.py:
 
 ```
 from django.db import models
 
-class Phrase(models.Model):
+class Person(models.Model):
     class Meta:
-        app_label = "goudimel"
+        app_label = "timekeeper"
 
-    piece_id = models.ForeignKey("goudimel.Piece")
-    phrase_num = models.IntegerField(blank=True, null=True)
-    phrase_start = models.CharField(max_length=4, blank=True, null=True)
-    phrase_stop = models.CharField(max_length=4, blank=True, null=True)
-    phrase_text = models.CharField(max_length=255, blank=True, null=True)
-    rhyme = models.CharField(max_length=64, blank=True, null=True)
+    first_name = models.CharField(max_length=255, blank=True, null=True)
+    last_name = models.CharField(max_length=255, blank=True, null=True)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return u"{0}".format(self.phrase_text)
+        return u"{0}, {1}".format(self.last_name, self.first_name)
 ```
 
-Notice that we are using Foreign Key fields to relate each instance to another model. In the `Piece` model we point to the Book instance that contains this piece; in `Phrase` we point to the piece that contains this phrase. Rather than using actual objects for this relationship we can provide a special string format for this reference, "goudimel.Book" and "goudimel.Piece". This is a useful method for making these relationships since you avoid the problem of circular imports in Python.
+place.py:
+
+```
+from django.db import models
+
+class Place(models.Model):
+    class Meta:
+        app_label = "timekeeper"
+
+    name = models.CharField(max_length=255, blank=True, null=True)
+    latitude = models.FloatField(blank=True, null=True)
+    longitude = models.FloatField(blank=True, null=True)
+
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __unicode__(self):
+        return u"{0}".format(self.name)
+```
+
+Notice that we are using Foreign Key fields to relate each instance to another model. In the `Activity` model we point to the Person and Place objects that store data about that particular person and that particular place.
 
 One last thing we need to do is to add a reference to each of these in the `__init__.py` file in our `models` directory. Open up this file and add:
 
 ```
-from goudimel.models.book import Book
-from goudimel.models.piece import Piece
-from goudimel.models.phrase import Phrase
+from timekeeper.models.activity import Activity
+from timekeeper.models.person import Person
+from timekeeper.models.place import Place
 ```
 
 This allows Django to pick up on these models in the database synchronization system.
 
 ## Serializers
 
-We will need a serializer for every model we create. In the `serializers` folder you created earlier, create three new files named the same as the models: `book.py`, `piece.py` and `phrase.py`. These will be pretty simple to start with.
+We will need at least one serializer for every model we create. In the `serializers` folder you created earlier, create three new files named the same as the models: `activity.py`, `person.py` and `place.py`. These will be pretty simple to start with.
 
-`book.py`
+`activity.py`
 
 ```
-from goudimel.models.book import Book
+from timekeeper.models.activity import Activity
 from rest_framework import serializers
 
-class BookSerializer(serializers.HyperlinkedModelSerializer):
-
+class ActivitySerializer(serializers.HyperLinkedModelSerializer):
     class Meta:
-        model = Book
+        model = Activity
 ```
 
-`piece.py`
+`person.py`
 
 ```
-from goudimel.models.piece import Piece
+from timekeeper.models.person import Person
 from rest_framework import serializers
 
-class PieceSerializer(serializers.HyperlinkedModelSerializer):
-
+class PersonSerializer(serializers.HyperLinkedModelSerializer):
     class Meta:
-        model = Piece
+        model = Person
 ```
 
-`phrase.py`
+`place.py`
 
 ```
-from goudimel.models.phrase import Phrase
+from timekeeper.models.place import Place
 from rest_framework import serializers
 
-class PhraseSerializer(serializers.HyperlinkedModelSerializer):
-
+class PlaceSerializer(serializers.HyperLinkedModelSerializer):
     class Meta:
-        model = Phrase
+        model = Place
 ```
 
 ## Views
@@ -441,13 +433,11 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
-
 @api_view(('GET',))
 def api_root(request, format=None):
-    return Response({'books': reverse('books-list', request=request, format=format),
-                     'pieces': reverse('pieces-list', request=request, format=format),
-                     'phrases': reverse('phrases-list', request=request, format=format)})
-
+    return Response({'activities': reverse('activity-list', request=request, format=format),
+                     'places': reverse('place-list', request=request, format=format),
+                     'people': reverse('person-list', request=request, format=format)})
 
 @ensure_csrf_cookie
 def home(request):
@@ -468,7 +458,7 @@ For now, let's use a very simple HTML5 template. Create a new file in your `temp
 <head>
   <meta charset="utf-8">
 
-  <title>Digital Goudimel</title>
+  <title>Time Keeper: Keep Your Time</title>
 
   <link rel="stylesheet" href="{{ STATIC_URL }}css/styles.css">
 
@@ -506,26 +496,18 @@ Now, let's connect the views we created and map them to URLs we can visit in a w
 
 ```
 from django.conf.urls import patterns, include, url
-from rest_framework.urlpatterns import format_suffix_patterns
+from django.contrib import admin
 
-# Uncomment the next two lines to enable the admin:
-# from django.contrib import admin
-# admin.autodiscover()
+from rest_framework.urlpatterns import format_suffix_patterns
 
 urlpatterns = []
 
-urlpatterns += format_suffix_patterns(
-    patterns('goudimel.views.main',
-
+urlpatterns += patterns('timekeeper.views.main',
     url(r'^$', 'home'),
-    url(r'^browse/$', 'api_root')
+    url(r'^browse/$', 'api_root'),
 
-    # Uncomment the admin/doc line below to enable admin documentation:
-    # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-
-    # Uncomment the next line to enable the admin:
-    # url(r'^admin/', include(admin.site.urls)),
-))
+    url(r'^admin/', include(admin.site.urls)),
+)
 ```
 
 Note in particular the two lines that reference our views, 'home' and 'api_root'. You will see a regular expression that indicates the URL and the view that handles it.
@@ -554,26 +536,24 @@ Open your `settings.py` file and look for the `DATABASES` section. Change it to 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'goudimel.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'timekeeper.sqlite3'),
     }
 }
 ```
 
-## South and Migrations
+## Migrations
 
-South is a very handy Python module that provides "Migrations" to Django.
+A migration is a method of updating a database without needing to wipe and re-create a database from scratch if we change our models. Remember that our models are directly tied to the database structure, so if we edit our models, for example, adding or removing a field, we must also make sure the data contained in the database reflects these edits.
 
-A migration is a method of updating a database without needing to wipe and re-create a database from scratch if we change our models. Remember that our models are directly tied to the database structure, so if we edit our models, we must also make sure the database reflects these edits.
+Without migrations, updating our website with existing data is an awkward and error-prone process. If we wanted to make a change to our models in a production website we would need to dump the data, re-structure it according to a new structure, and then re-import it into the new database structure. This is a lot of work, and can lead to loss of data if you're not careful.
 
-Without South, updating our website will become increasingly painful. If we want to make a change to a production website we will need to dump the data, re-structure it according to a new structure, and then re-import it into a synchronized database. This is a lot of work, and can lead to loss of data if you're not careful.
+Migrations keep track of your model changes and helps synchronize your database without dumping your data. (You should have a backup on hand, though, in case it fails!)
 
-South keeps track of your model changes and allows you to synchronize your database without dumping your data. (You should have a backup on hand, though, in case it fails!)
+To begin, we must first describe the initial state of our database models.
 
-We currently have no migrations in our application, so we should add an initial one to bring South into the loop. In the directory with `manage.py` run the following command:
+`$> python manage.py makemigrations timekeeper`
 
-`python manage.py schemamigration --initial goudimel`
-
-This tells South to create an initial migration for our application.
+This tells Django to create an initial migration for our application.
 
 If successful you should now see a 'migrations' folder in your project. As you change your models you will run a similar command and the changes to the database structure will be kept in Python files in this folder.
 
@@ -581,19 +561,13 @@ For now, however, let's continue with getting our database set up.
 
 ## Synchronizing our database
 
-With South, setting up the database is a two-step process. We must first run the Django 'syncdb' command to create the Django database tables, and then we must run our migration to synchronize our models to the database.
+Synchronizing the database converts the Python models to actual database tables and fields. To synchronize your database, run the following command:
 
-First, we synchronize:
+`$> python manage.py syncdb`
 
-`python manage.py syncdb`
+If this is the first time you run it, it will ask you to create a new superuser. You should do so using an easy username and password (you will have to enter it a lot!). (I typically use something like "foo".)
 
-This will ask you to create a new superuser. You should do so using an easy username and password (you will have to enter it a lot!). (I typically use something like "foo".)
-
-Once that completes successfully we then need to migrate our models:
-
-`python manage.py migrate`
-
-This will set up our models in our database.
+Notice that part of this process checks to see if there are any existing migrations and applies them.
 
 That's it! We should have a perfectly synchronized database now.
 
@@ -606,12 +580,12 @@ If all has gone well we can fire up our application and take it for a spin. Type
 You should see this:
 
 ```
-Validating models...
+Performing system checks...
 
-0 errors found
-November 07, 2013 - 17:17:15
-Django version 1.5.4, using settings 'goudimel.settings'
-Development server is running at http://127.0.0.1:8000/
+System check identified no issues (0 silenced).
+April 25, 2014 - 20:54:36
+Django version 1.7b2, using settings 'timekeeper.settings'
+Starting development server at http://127.0.0.1:8000/
 Quit the server with CONTROL-C.
 ```
 
@@ -623,103 +597,105 @@ In our `urls.py` configuration we actually configured TWO urls. One was the base
 
 ![Figure 4](figures/figure4.png)
 
-Looks like it doesn't work, but let's see why it doesn't work. It's telling me that the 'reverse' for books-list wasn't found. What does that mean?
+Looks like it doesn't work, but let's see why it doesn't work. It's telling me that the 'reverse' for activities-list wasn't found. What does that mean?
 
-If you remember in our `main.py` view we wrote this:
+If you remember in our `main.py` file we wrote this view:
 
 ```
-return Response({'books': reverse('books-list', request=request, format=format),
-                'pieces': reverse('pieces-list', request=request, format=format),
-                'phrases': reverse('phrases-list', request=request, format=format)})
+return Response({'activities': reverse('activity-list', request=request, format=format),
+                 'places': reverse('place-list', request=request, format=format),
+                 'people': reverse('person-list', request=request, format=format)})
 ```
 
-Since `/browse/` is mapped to this view, it's complaining that it can't "reverse" resolve the name "books-list" into a view that can display what we are asking it to.
+Since `/browse/` is mapped to this view, it's complaining that it can't "reverse" resolve the name "activity-list" into a view that can display what we are asking it to.
 
 So let's correct this now.
 
-Open up `views/main.py` and write the following views:
+Create a few new files in your `views` directory, mapping to the models that we defined: `activity.py`, `person.py`, `place.py`.
+
+For each file, write the following views:
+
+`activity.py`
 
 ```
-class BookList(generics.ListCreateAPIView):
-    model = Book
-    serializer_class = BookSerializer
-
-
-class BookDetail(generics.RetrieveUpdateDestroyAPIView):
-    model = Book
-    serializer_class = BookSerializer
-
-
-class PieceList(generics.ListCreateAPIView):
-    model = Piece
-    serializer_class = PieceSerializer
-
-
-class PieceDetail(generics.RetrieveUpdateDestroyAPIView):
-    model = Piece
-    serializer_class = PieceSerializer
-
-
-class PhraseList(generics.ListCreateAPIView):
-    model = Phrase
-    serializer_class = PhraseSerializer
-
-
-class PhraseDetail(generics.RetrieveUpdateDestroyAPIView):
-    model = Phrase
-    serializer_class = PhraseSerializer
-```
-
-Don't forget to add these imports to the top of your views file.
-
-```
+from timekeeper.models.activity import Activity
+from timekeeper.serializers.activity import ActivitySerializer
 from rest_framework import generics
 
-from goudimel.models import Book
-from goudimel.models import Piece
-from goudimel.models import Phrase
+class ActivityList(generics.ListCreateAPIView):
+    model = Activity
+    serializer_class = ActivitySerializer
 
-from goudimel.serializers.book import BookSerializer
-from goudimel.serializers.piece import PieceSerializer
-from goudimel.serializers.phrase import PhraseSerializer
+
+class ActivityDetail(generics.RetrieveUpdateDestroyAPIView):
+    model = Activity
+    serializer_class = ActivitySerializer
+```
+
+`person.py`
+```
+from timekeeper.models.person import Person
+from timekeeper.serializers.person import PersonSerializer
+from rest_framework import generics
+
+class PersonList(generics.ListCreateAPIView):
+    model = Person
+    serializer_class = PersonSerializer
+
+
+class PersonDetail(generics.RetrieveUpdateDestroyAPIView):
+    model = Person
+    serializer_class = PersonSerializer
+```
+
+`place.py`
+```
+from timekeeper.models.place import Place
+from timekeeper.serializers.place import PlaceSerializer
+from rest_framework import generics
+
+class PlaceList(generics.ListCreateAPIView):
+    model = Place
+    serializer_class = PlaceSerializer
+
+
+class PlaceDetail(generics.RetrieveUpdateDestroyAPIView):
+    model = Place
+    serializer_class = PlaceSerializer
 ```
 
 Now, let's hook up these new views in our `urls.py` file. It should look like this:
 
 ```
 from django.conf.urls import patterns, include, url
+from django.contrib import admin
+
 from rest_framework.urlpatterns import format_suffix_patterns
 
-from goudimel.views.main import BookList, BookDetail
-from goudimel.views.main import PieceList, PieceDetail
-from goudimel.views.main import PhraseList, PhraseDetail
-
-# Uncomment the next two lines to enable the admin:
-# from django.contrib import admin
-# admin.autodiscover()
+from timekeeper.views.activity import ActivityList, ActivityDetail
+from timekeeper.views.place import PlaceList, PlaceDetail
+from timekeeper.views.person import PersonList, PersonDetail
 
 urlpatterns = []
 
-urlpatterns += format_suffix_patterns(
-    patterns('goudimel.views.main',
-
+urlpatterns += patterns('timekeeper.views.main',
     url(r'^$', 'home'),
     url(r'^browse/$', 'api_root'),
-    url(r'^book/$', BookList.as_view(), name="books-list"),
-    url(r'^book/(?P<pk>[0-9]+)/$', BookDetail.as_view(), name="book-detail"),
-    url(r'^piece/$', PieceList.as_view(), name="pieces-list"),
-    url(r'^piece/(?P<pk>[0-9]+)/$', PieceDetail.as_view(), name="piece-detail"),
-    url(r'^phrase/$', PhraseList.as_view(), name="phrases-list"),
-    url(r'^phrase/(?P<pk>[0-9]+)/$', PhraseDetail.as_view(), name="phrase-detail")
-    # Uncomment the admin/doc line below to enable admin documentation:
-    # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
-    # Uncomment the next line to enable the admin:
-    # url(r'^admin/', include(admin.site.urls)),
-))
+    url(r'^activities/$', ActivityList.as_view(), name="activity-list"),
+    url(r'^activity/(?P<pk>[0-9]+)/$', ActivityDetail.as_view(), name="activity-detail"),
+    url(r'^places/$', PlaceList.as_view(), name="place-list"),
+    url(r'^place/(?P<pk>[0-9]+)/$', PlaceDetail.as_view(), name="place-detail"),
+    url(r'^people/$', PersonList.as_view(), name="person-list"),
+    url(r'^person/(?P<pk>[0-9]+)/$', PersonDetail.as_view(), name="person-detail"),
+
+    url(r'^admin/', include(admin.site.urls)),
+)
 ```
 
-Finally, let's add a temporary configuration parameter in our `settings.py`. Scroll to the bottom and add the following:
+*Note*: Notice the differences in plurals (for lists) and singulars, especially for "people" and "activities."
+
+Finally, let's add a temporary configuration parameter in our `settings.py` to define the default renderer. Scroll to the bottom and add the following:
 
 ```
 REST_FRAMEWORK = {
@@ -737,48 +713,40 @@ This is the beginning of our API! Clicking on any of the links will bring you to
 
 # The Django Admin interface
 
-Before we continue, let's set up the Django Admin interface. This will allow us to directly enter data into our database with a tool that comes with Django. We will need to edit a couple files to set this up.
+Before we continue, let's look at the Django Admin interface. This will allow us to directly enter data into our database with a tool that comes with Django.
 
-First, look at `settings.py` and scroll to the "INSTALLED_APPS" section. Uncomment the `django.contrib.admin` section.
-
-Next, in your `urls.py` uncomment two lines at the top and one at the bottom that are identified as part of the admin settings.
-
-Finally, create a new file in the `admin` folder and call it `admin.py`.
+Finally, create a new folder, 'timekeeper/admin' and add two new files, `__init__.py` and `admin.py`.
 
 Create the following in this file:
 
 ```
 from django.contrib import admin
 
-from goudimel.models import Book
-from goudimel.models import Piece
-from goudimel.models import Phrase
+from timekeeper.models.activity import Activity
+from timekeeper.models.person import Person
+from timekeeper.models.place import Place
 
 
-class BookAdmin(admin.ModelAdmin):
+class ActivityAdmin(admin.ModelAdmin):
     pass
 
 
-class PieceAdmin(admin.ModelAdmin):
+class PersonAdmin(admin.ModelAdmin):
     pass
 
 
-class PhraseAdmin(admin.ModelAdmin):
+class PlaceAdmin(admin.ModelAdmin):
     pass
 
 
-admin.site.register(Book, BookAdmin)
-admin.site.register(Piece, PieceAdmin)
-admin.site.register(Phrase, PhraseAdmin)
+admin.site.register(Activity, ActivityAdmin)
+admin.site.register(Person, PersonAdmin)
+admin.site.register(Place, PlaceAdmin)
 ```
 
-In the `admin/__init__.py` file add the following line:
+In the `__init__.py` file add the following line:
 
-`from admin import *`
-
-Finally, go to your shell and synchronize your database:
-
-`python manage.py syncdb`. 
+`from timekeeper.admin.admin import *`
 
 Start your development server and point your web browser to `http://localhost:8000/admin`. You should be brought to a log-in page, where you should enter the username and password you entered when you synchronized your database.
 
@@ -788,31 +756,29 @@ Once in you should be at a screen that looks like this:
 
 Clicking on any of the content types will bring you to a screen where we can add or edit records.
 
-Let's create some dummy data.
+Before continuing, notice that "Activitys" and "Persons" are not properly named -- they should be "Activities" and "People". Django did its best to guess the plural form, but sometimes it gets it wrong. Let's fix this up.
+
+Go to your `models/activity.py` file and change your `Meta` class to the following:
+
+```
+class Meta:
+    app_label = "timekeeper"
+    verbose_name_plural = "activities"
+```
+
+Do the same type of change for your `models/person.py` file. If you did not quit your development server in your terminal, you should now just be able to refresh the page and see your changes.
+
+![Figure 6b](figures/figure6b.png)
+
+Now, let's create some dummy data to play with.
 
 ## Entering data
 
-Start with the Book entry and create a couple books. It doesn't matter what you enter -- this is just to get a feel for how this site will work.
+Start with the Activity entry and create a couple activities and time. It doesn't matter what you enter -- jogging, answering e-mails, browsing facebook -- this is just to get a feel for how this site will work.
 
-Next, add a couple pieces. You will notice that there is a dropdown box to choose which "Book" each piece belongs to. Enter a couple of pieces.
-
-Finally, add some phrases and link them up to each piece.
+You will notice that you need to specify both a location and a partner for this activity. The "+" sign next to each of these fields allows you to add new entries to these tables in place.
 
 After you've got all of your data entered, go to `http://localhost:8000/browse` to see what data is reflected in your API.
-
-Here's what I have for my 'Book' entries:
-
-![Figure 7a](figures/figure7.png)
-
-And my Pieces:
-
-![Figure 7b](figures/figure7b.png)
-
-And finally Phrases:
-
-![Figure 7c](figures/figure7c.png)
-
-Notice in Pieces and Phrases, the related model (book_id and piece_id) is rended as a hyperlink. Clicking on this link will take you to the record for that book or piece.
 
 ## Review
 
@@ -862,34 +828,36 @@ class CustomHTMLRenderer(TemplateHTMLRenderer):
 
 This will form the basis for our view renderers.
 
-Open your `views/main.py` and add the following code:
+Open your `views/activity.py` and add the following code:
 
 ```
-class BookListHTMLRenderer(CustomHTMLRenderer):
-    template_name = "book/book_list.html"
+from timekeeper.renderers.custom_html_renderer import CustomHTMLRenderer
+
+class ActivityListHTMLRenderer(CustomHTMLRenderer):
+    template_name = "activity/activity_list.html"
 
 
-class BookDetailHTMLRenderer(CustomHTMLRenderer):
-    template_name = "book/book_detail.html"
+class ActivityDetailHTMLRenderer(CustomHTMLRenderer):
+    template_name = "activity/activity_detail.html"
 ```
 
-Repeat this for both Piece and Phrase, editing the name of the class and the template name as needed. Don't forget to add a line to import `CustomHTMLRenderer` from `renderers/custom_html_renderer.py`
+Repeat this for both Place and Person, editing the name of the class and the template name as needed.
 
-Next, let's create our templates that we have defined for our renderers. In our `templates` directory create the `book/`, `piece/` and `phrase/` directories, and then create each of the template files that you referenced (e.g., 'book/book_list.html' and 'book/book_detail.html')
+Next, let's create our templates that we have defined for our renderers. In our `templates` directory create the `activity`, `place` and `person` directories, and then create each of the template files that you referenced (e.g., 'activity/activity_list.html' and 'activity/activity_detail.html')
 
 Now, let's edit each of our views to tie in the HTML renderers. For each one of your views add the following lines, customizing as necessary:
 
-`renderer_classes = (JSONRenderer, JSONPRenderer, BookListHTMLRenderer)`
+`renderer_classes = (JSONRenderer, JSONPRenderer, ActivityListHTMLRenderer)`
 
 or 
 
-`renderer_classes = (JSONRenderer, JSONPRenderer, BookDetailHTMLRenderer)`
+`renderer_classes = (JSONRenderer, JSONPRenderer, ActivityDetailHTMLRenderer)`
 
-At the top of this views file you should import the built-in JSON and JSONP renderers as well:
+At the top of each views file you should import the built-in JSON and JSONP renderers as well:
 
 `from rest_framework.renderers import JSONRenderer, JSONPRenderer`
 
-Now you should be able to start your development server and navigate to `http://localhost:8000/book/`. However, you are only seeing a blank page! Let's try adding some text to `book/book_list.html`.
+Now you should be able to start your development server and navigate to `http://localhost:8000/activities/`. However, you are only seeing a blank page! Let's try adding some text to `book/book_list.html`.
 
 ```
 {% extends "base.html" %}
@@ -899,23 +867,23 @@ Now you should be able to start your development server and navigate to `http://
 {% endblock %}
 ```
 
-You should restart your development server and then refresh your page. "Hello World" should show up for you.
+If you refresh your page. "Hello World" should show up for you now.
 
-However, there's something important here. What happens if we try and query the same URL with an `Accept: application/json` header? Open up a new terminal window (make sure your development server is still running) and use curl to query the server:
+However, there's something important going on here. Remember that our web site *should* respond to either request for HTML content, or requests for JSON content. What happens if we try and query the same URL with an `Accept: application/json` header? Open up a new terminal window (make sure your development server is still running) and use curl to query the server:
 
-`curl -XGET -H "Accept: application/json" http://localhost:8000/book/`
+`$> curl -XGET -H "Accept: application/json" http://localhost:8000/activites/`
 
 You should get the following response:
 
 ```
-~|⇒ curl -XGET -H "Accept: application/json" http://localhost:8000/book/
-[{"url": "http://localhost:8000/book/1/", "title": "Book 1", "publisher": "Someone", "published": "1501-01-10", "rism_id": "1", "cesr_id": "2", "remarks": "3", "num_pages": 100, "created": "2013-11-08T00:29:36.956Z", "updated": "2013-11-08T00:29:36.956Z"}, {"url": "http://localhost:8000/book/2/", "title": "Book 2", "publisher": "Someone", "published": "1501-01-10", "rism_id": "1", "cesr_id": "1", "remarks": "", "num_pages": "", "created": "2013-11-08T00:30:41.809Z", "updated": "2013-11-08T00:30:41.809Z"}]
+~|⇒ curl -XGET -H "Accept: application/json" http://localhost:8000/activities/
+[{"url": "http://localhost:8000/activity/1/", "title": "Answering E-mail", "start_time": "2014-04-25T21:28:03Z", "end_time": "2014-04-25T00:00:00Z", "place": "http://localhost:8000/place/1/", "partner": null, "created": "2014-04-25T21:28:15.953Z", "updated": "2014-04-25T21:28:15.953Z"}, {"url": "http://localhost:8000/activity/2/", "title": "Browsing Facebook", "start_time": "2014-04-25T12:00:00Z", "end_time": "2014-04-25T21:28:48Z", "place": "http://localhost:8000/place/1/", "partner": null, "created": "2014-04-25T21:28:51.205Z", "updated": "2014-04-25T21:28:51.205Z"}, {"url": "http://localhost:8000/activity/3/", "title": "Jogging", "start_time": "2014-04-24T12:00:00Z", "end_time": "2014-04-24T13:00:00Z", "place": "http://localhost:8000/place/3/", "partner": "http://localhost:8000/person/1/", "created": "2014-04-25T21:29:34.652Z", "updated": "2014-04-25T21:38:36.355Z"}]
 ```
 
 Just for fun, let's change our Accept header to text/html and try again:
 
 ```
-~|⇒ curl -XGET -H "Accept: text/html" http://localhost:8000/book/
+$> curl -XGET -H "Accept: text/html" http://localhost:8000/activities/
 <!doctype html>
 
 <html lang="en">
@@ -944,7 +912,7 @@ Now we have the beginnings of a database-driven website AND API. You should give
 
 ## Displaying data in the templates
 
-Let's take a closer look at our `custom_html_renderer.py` file and the class we defined in it. You'll notice that towards the end it looks like this:
+Let's take a closer look at the `renderers/custom_html_renderer.py` file and the class we defined in it. You'll notice that towards the end it looks like this:
 
 ```
 context = self.resolve_context({'content': data}, request, response)
@@ -957,13 +925,13 @@ The `context` variable is what is responsible for passing along the data from ou
 > template, you can print the `content` variable directly by rendering it
 > in a Django template. Just put `{{ content }}` in your template and refresh.
 
-To see how this might work, open up the `book/book_list.html` template file and replace the content of the "body" block with the following Django template code:
+To see how this might work, open up the `activity/activity_list.html` template file and replace the content of the "body" block with the following Django template code:
 
 ```
 {% block body %}
     <ul>
-    {% for book in content %}
-        <li>{{ book.title }}</li>
+    {% for activity in content %}
+        <li>{{ activity.title }}</li>
     {% endfor %}
     </ul>
 {% endblock %}
