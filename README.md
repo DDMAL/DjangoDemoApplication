@@ -1,0 +1,4 @@
+DjangoDemoApplication
+=====================
+
+Demo Training Application
