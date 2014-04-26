@@ -3,7 +3,7 @@
 {% block body %}
     <ul>
     {% for activity in content %}
-        <li>{{ activity.title }}</li>
+        <li><a href="{{ activity.url }}">{{ activity.title }}</a></li>
     {% endfor %}
     </ul>
 {% endblock %}

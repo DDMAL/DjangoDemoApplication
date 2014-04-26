@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block body %}
+    <ul>
+    {% for place in content %}
+        <li><a href="{{ place.url }}">{{ place.name }}</a></li>
+    {% endfor %}
+    </ul>
+{% endblock %}

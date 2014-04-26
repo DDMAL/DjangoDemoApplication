@@ -158,7 +158,7 @@ I'm sure we have all seen examples of this type of URL. This URL uses _query par
 
 `http://example.com/res.cgi?type=place&action=list&format=json`
 
-Rather than giving an ID, this request asks for a list of pieces to be returned, but rendered in JSON.
+Rather than giving an ID, this request asks for a list of places to be returned, but rendered in JSON.
 
 Finally, to round out our example of a non-RESTful architecture, consider this URL:
 
@@ -857,7 +857,7 @@ At the top of each views file you should import the built-in JSON and JSONP rend
 
 `from rest_framework.renderers import JSONRenderer, JSONPRenderer`
 
-Now you should be able to start your development server and navigate to `http://localhost:8000/activities/`. However, you are only seeing a blank page! Let's try adding some text to `book/book_list.html`.
+Now you should be able to start your development server and navigate to `http://localhost:8000/activities/`. However, you are only seeing a blank page! Let's try adding some text to `activity/activity_list.html`.
 
 ```
 {% extends "base.html" %}
@@ -890,7 +890,7 @@ $> curl -XGET -H "Accept: text/html" http://localhost:8000/activities/
 <head>
   <meta charset="utf-8">
 
-  <title>Digital Goudimel</title>
+  <title>TimeKeeper: Keep your Time</title>
 
   <link rel="stylesheet" href="/static/css/styles.css">
 
@@ -936,7 +936,7 @@ To see how this might work, open up the `activity/activity_list.html` template f
     </ul>
 {% endblock %}
 ```
-This will render a list of the books we have in our database in our web browser. It doesn't look like much, but we know it works.
+This will render a list of the activities we have in our database in our web browser. It doesn't look like much, but we know it works.
 
 ![Figure 8](figures/figure8.png)
 
@@ -946,11 +946,11 @@ Let's bring in some CSS and JavaScript libraries to start making this look a lit
 
 Twitter Bootstrap is a collection of CSS styles and JavaScript scripts that make creating a good-looking website relatively easy. It has styles for buttons and other form controls, as well as a powerful grid system for creating a pleasing layout.
 
-You should begin by downloading the files from http://getbootstrap.com.
+You should begin by downloading the files from the [Bootstrap Website](http://getbootstrap.com).
 
 You will have three folders, `css`, `js`, and `fonts`. You should move the contents of `css` and `js` to your existing folders in your `static` folder, and then copy the whole `fonts` directory to your `static` folder.
 
-jQuery is a JavaScript library that makes dealing with JavaScript a lot easier. You should download both the 'compressed' and 'uncompressed' versions at http://jquery.com, and put them in your `static/js` folder as `jquery.js` and `jquery.min.js`. jQuery will also complain if it can't find it's "map" file, so you should download the map file as well and put it in `static/js`.
+[jQuery](http://jquery.com) is a JavaScript library that makes dealing with JavaScript a lot easier. You should download both the 'compressed' and 'uncompressed' versions and put them in your `static/js` folder as `jquery.js` and `jquery.min.js`. jQuery will also complain if it can't find it's "map" file, so you should download the map file as well and put it in `static/js`.
 
 To hook these up we just edit our `base.html` file and import the files.
 
@@ -963,7 +963,7 @@ Edit your `base.html` file to include these files like this:
 <head>
   <meta charset="utf-8">
 
-  <title>Digital Goudimel</title>
+  <title>TimeKeeper: Keep your Time</title>
 
   <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap.css">
   <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap-theme.css">
@@ -982,11 +982,11 @@ Edit your `base.html` file to include these files like this:
         <div class="page-header">
             <div class="row">
                 <div class="col-md-2">
-                    <img src="{{ STATIC_URL }}img/goudimel.png" />
+                    <img src="{{ STATIC_URL }}img/timekeeper.png" />
                 </div>
                 <div class="col-md-10">
-                    <h1>Digital Goudimel</h1>
-                    <p class="lead">All there is and ever will be to know about the man, the myth, the legend.</p>
+                    <h1>TimeKeeper</h1>
+                    <p class="lead">Keep your Time</p>
                 </div>
             </div>
         </div>
@@ -998,7 +998,7 @@ Edit your `base.html` file to include these files like this:
 </html>
 ```
 
-Note that we've added a little image of Goudimel in our `static/img` folder. You should do the same.
+Note that we've added a little image of a clock in our `static/img` folder. You should do the same.
 
 Just to round it out, let's update our `index.html` template to allow users to click links to browse our site:
 
@@ -1008,13 +1008,13 @@ Just to round it out, let's update our `index.html` template to allow users to c
 {% block body %}
     <h1>Explore our site</h1>
     <ul>
-        <li><a href="/book">Books</a></li>
-        <li><a href="/piece">Pieces</a></li>
-        <li><a href="/phrase">Phrases</a></li>
+        <li><a href="/activities">Activities</a></li>
+        <li><a href="/places">Places</a></li>
+        <li><a href="/people">People</a></li>
     </ul>
 {% endblock %}
 ```
 
 Visiting the website in a browser will now display our base template with the data from each of the other templates in the body region. Now it's starting to come together.
 
-To save space and time writing this section, I won't go through every step of the customization and design of the pages. You now have the basics for inserting data into a template, so you can build the list and detail views on your own. If you get stuck you should refer to the templates in the GitHub repository for this tutorial for any further changes and modifications. You will need to switch to the "Tutorial-Part1" branch to see it at this point in time.
+To save space and time writing this section, I won't go through every step of the customization and design of the pages. You now have the basics for inserting data into a template, so you can build the list and detail views on your own. If you get stuck you should refer to the templates in the GitHub repository for this tutorial for any further changes and modifications.
