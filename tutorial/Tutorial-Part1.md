@@ -1017,4 +1017,42 @@ Just to round it out, let's update our `index.html` template to allow users to c
 
 Visiting the website in a browser will now display our base template with the data from each of the other templates in the body region. Now it's starting to come together.
 
-To save space and time writing this section, I won't go through every step of the customization and design of the pages. You now have the basics for inserting data into a template, so you can build the list and detail views on your own. If you get stuck you should refer to the templates in the GitHub repository for this tutorial for any further changes and modifications.
+## Templating the detail and list pages
+
+To save space and time writing this section, I won't go through every step of the customization and design of the pages, but I will demonstrate how to theme the "activity" list and detail pages. We can expand the templates created previously and add some basic information display. Remember that we are accessing everything on the model through the `content` variable. 
+
+Open up the `activity/activity_list.html` page. We will make a small change to link each item in the list to an item page.
+
+```
+{% extends "base.html" %}
+
+{% block body %}
+    <ul>
+    {% for activity in content %}
+        <li><a href="{{ activity.url }}">{{ activity.title }}</a></li>
+    {% endfor %}
+    </ul>
+{% endblock %}
+```
+
+If you refresh your activity list page now, the items in the list should be hyperlinked. Clicking on the link will show you a blank page. To customize this look, add the following code to `activity/activity_detail.html`.
+
+```
+{% extends "base.html" %}
+
+{% block body %}
+    <h2>{{ content.title }}</h2>
+    <dl>
+        <dt>Start Time</dt>
+        <dd>{{ content.start_time }}</dd>
+        <dt>End Time</dt>
+        <dd>{{ content.end_time }}</dd>
+    </dl>
+{% endblock %}
+```
+
+Notice here that we use the `content` variable to access the fields of the model that we are displaying.
+
+If you refresh the detail page for one of your activities, you should now see a display of the information contained in your database for each entry in your activity table.
+
+You now have the basics for inserting data into a template, so you can build the list and detail views on your own. If you get stuck you should refer to the templates in the GitHub repository for this tutorial for any further changes and modifications.
