@@ -89,3 +89,6 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
     ),
 }
+
+SOLR_SERVER = "http://localhost:8080/timekeeper-solr/"
+
