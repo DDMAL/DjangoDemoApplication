@@ -58,3 +58,5 @@ docs/_build/
 app_env/*
 
 target/*
+
+solr/target/*
