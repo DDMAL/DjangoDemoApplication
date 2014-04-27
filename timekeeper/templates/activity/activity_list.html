@@ -1,9 +1,20 @@
 {% extends "base.html" %}
 
 {% block body %}
-    <ul>
-    {% for activity in content %}
-        <li><a href="{{ activity.url }}">{{ activity.title }}</a></li>
-    {% endfor %}
-    </ul>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Activity</th>
+                <th>Place</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for activity in content %}
+            <tr>
+                <td><a href="{{ activity.url }}">{{ activity.title }}</a></td>
+                <td>{{ activity.place.name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}
