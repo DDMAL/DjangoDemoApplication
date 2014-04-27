@@ -507,6 +507,7 @@ Notable exceptions to this are initial commits, code style cleanup commits, code
 You should avoid committing binary blobs of data, especially if they're a by-product of a building or running process. The following is a partial list of things you should never commit to a repository:
 
  * Any virtual environment ("virtualenv") folder.
+ * `.DS_Store` files (if you're on a Mac)
  * `*.pyc` files. These are automatically generated when a Python script is run.
  * Database files, especially `.sqlite` files.
  * Any built or compiled files, e.g., a Solr `.war` file, a `.dylib` file, or a "Frameworks" folder (e.g., `mei.framework/`).
@@ -516,7 +517,7 @@ Binary blobs that you may commit include:
  * Images and image data
  * Small sound files (if they're part of an interface, and not part of a dataset)
 
-To automatically exclude files from your commits, you should establish a `.gitignore` file for your project.
+To automatically exclude files from your commits, you should establish a `.gitignore` file for your project. If you create a new GitHub repository it gives you the option of adding a default `.gitignore` file.
 
 ### Commit messages
 
@@ -635,6 +636,10 @@ Firefox and Safari are also good. I have not seen any acceptable examples of Int
 Sublime Text is a very good development editor. You should use the `Package Control` extension, which provides a plugin management system for installing extensions.
 
 TextMate is also very good. If you are an Emacs or Vim user, that is fine but be aware that you're on your own for support!
+
+At the very least, your editor should support some form of linting or style-adherence. For example, the "[Emmett](http://docs.emmet.io)" plugin can provide some shortcuts for repetitive tasks ("boilerplate" code).
+
+The "SublimeLinter" plugin is extremely useful for ensuring your code meets the PEP8 standards. If you use Sublime Text, you should install this package and the "SublimeLinter-flake8" package. You can also install other linters for JavaScript and other languages.
 
 ### Version Control
 
