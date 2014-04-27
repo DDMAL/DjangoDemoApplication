@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.contrib import admin
 
 from rest_framework.urlpatterns import format_suffix_patterns
@@ -9,7 +9,7 @@ from timekeeper.views.person import PersonList, PersonDetail
 
 urlpatterns = []
 
-urlpatterns += patterns('timekeeper.views.main',
+urlpatterns += format_suffix_patterns('timekeeper.views.main',
     url(r'^$', 'home'),
     url(r'^browse/$', 'api_root'),
 
