@@ -1,97 +1,151 @@
 # Extended Serializers
 
-It's time we took a closer look at serializers. Until now they have been mostly transparent, serving out the content from the models almost transparently.
+It's time we took a closer look at serializers.
 
-However, let's imagine that I would like to display the title of the book for each piece in my views. Currently, the only data the serializer is giving me is a URL to retrieve the data about the book -- not the actual data itself.
+Let's imagine that I would like to display the title of the place for each activity. Currently, the only data the serializer is giving me is a URL to retrieve the place record -- not the actual data itself.
 
-Here is a JSON record of a Piece to illustrate:
+Here is a cURL request and a JSON response of an activity to illustrate:
 
 ```
+$> curl -XGET -H "Accept: application/json" http://localhost:8000/activity/1/
+
 {
-    "url":"http://localhost:8000/piece/1/",
-    "book_id":"http://localhost:8000/book/1/",
-    "title":"Blah blah",
-    "composer_src":"",
-    "forces":"SATB",
-    "print_concordances":"",
-    "ms_concordances":"",
-    "pdf_link":""
+    "url": "http://localhost:8000/activity/1/",
+    "title": "Jogging",
+    "start_time": "2014-04-26T18:10:08Z",
+    "end_time": "2014-04-26T18:10:11Z",
+    "place": "http://localhost:8000/place/1/",
+    "partner": "http://localhost:8000/person/1/",
+    "created": "2014-04-26T18:10:55.376Z",
+    "updated": "2014-04-26T18:10:55.376Z"
 }
 ```
 
-To get the book title, we can embed a book serializer within our piece serializer. Open up `serializers/piece.py` and import your `BookSerializer` from `serializers/book.py`. Then change your `PieceSerializer` to this:
+To get the book title, we can embed a place serializer within our piece serializer. Open up `serializers/activity.py` and create a new serializer for your place data. Your file should look like this:
 
 ```
-class PieceSerializer(serializers.HyperlinkedModelSerializer):
-    book_id = BookSerializer()
+from timekeeper.models.activity import Activity
+from timekeeper.models.place import Place
+from rest_framework import serializers
+
+class PlaceActivitySerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Place
+
+class ActivitySerializer(serializers.HyperlinkedModelSerializer):
+    place = PlaceActivitySerializer()
 
     class Meta:
-        model = Piece
+        model = Activity
 ```
 
-Now the request for the same piece results in this:
+Now the request for the same activity results in this:
 
 ```
 {
-    "book_id":{
-        "url":"http://localhost:8000/book/1/",
-        "title":"Book 1",
-        "publisher":"Someone",
-        "published":"1501-01-10",
-        "rism_id":"1",
-        "cesr_id":"2",
-        "remarks":"3",
-        "num_pages":100,
-        "created":"2013-11-08T00:29:36.956Z",
-        "updated":"2013-11-08T00:29:36.956Z"
+    place: {
+        url: "http://localhost:8000/place/1/",
+        name: "Gym",
+        latitude: null,
+        longitude: null,
+        created: "2014-04-26T18:10:22.523Z",
+        updated: "2014-04-26T18:10:22.523Z"
     },
-    "url":"http://localhost:8000/piece/1/",
-    "title":"Blah blah",
-    "composer_src":"",
-    "forces":"SATB",
-    "print_concordances":"",
-    "ms_concordances":"",
-    "pdf_link":""
+    url: "http://localhost:8000/activity/1/",
+    title: "Jogging",
+    start_time: "2014-04-26T18:10:08Z",
+    end_time: "2014-04-26T18:10:11Z",
+    partner: "http://localhost:8000/person/1/",
+    created: "2014-04-26T18:10:55.376Z",
+    updated: "2014-04-26T18:10:55.376Z"
 }
 ```
 
-We can now access the title from our piece through the `book_id` field. Open your `templates/piece/piece_list.html` and add a column for the book that a given piece is in.
+We can now access the title of our place through the `place` field. Open your `templates/activity/activity_list.html` and add a column for the place.
+
+```
+{% extends "base.html" %}
+
+{% block body %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Activity</th>
+                <th>Place</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for activity in content %}
+            <tr>
+                <td><a href="{{ activity.url }}">{{ activity.title }}</a></td>
+                <td>{{ activity.place.name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+```
 
 ## Computed Fields
 
-In our models we can define methods that can be used to process and extract information stored in that model. We have already seen a very simple example of this with the `__unicode__` method, returning the `title` field as a representation of that model.
+In our models we can define methods that can be used to process and extract information stored in that model. We have already seen a very simple example of this with the `__unicode__` method on the Person model:
 
-A computed field is a model method that acts like a field. To illustrate, let's make a computed field that takes a the 'composer_src' field in Piece and, if it contains a comma, splits it and reverses it to show the composer's name as Firstname Lastname, rather than Lastname, Firstname. Open your `Piece` model and add the following method:
+```
+class Person(models.Model):
+    ...
+    def __unicode__(self):
+        return u"{0}, {1}".format(self.last_name, self.first_name)
+```
+
+In other words, a computed field is a model method that acts like a field. To illustrate, let's make computed field that can display the person's name as "Firstname Lastname":
 
 ```
 @property
-def composer_name(self):
-    name = self.composer_src.split(",")
-    if len(name) > 1:
-        return u"{0} {1}".format(name[1], name[0])
-    else:
-        return u"{0}".format(self.composer_src)
+def full_name(self):
+    return u"{0} {1}".format(self.first_name, self.last_name)
 ```
 
-Again, this is a really simple method, and probably needs to be made bit more robust to different types of information in the `composer_src` field.
+We can now use this in our serializer to deliver the person's full name in "natural" order:
 
-We can now use this in our serializer to show the composers's full name, as well as their "sorting" name.
-
-Add the following field to your `serializers/piece.py`.
+Change your `serializers/person.py` to the following:
 
 ```
-    composer_name = serializers.Field(source="composer_name")
+from timekeeper.models.person import Person
+from rest_framework import serializers
+
+class PersonSerializer(serializers.HyperlinkedModelSerializer):
+    full_name = serializers.Field(source="full_name")
+
+    class Meta:
+        model = Person
 ```
 
-Now we have a new field in our output, `composer_name` which we can use to display a more natural, human-friendly version of the person's name.
+Now we have a new field in our output, `full_name` which we can use to display a more natural, human-friendly version of the person's name.
+
+```
+$> curl -XGET -H "Accept: application/json" http://localhost:8000/person/1/
+
+{
+    "full_name": "Kris Kringle",
+    "url": "http://localhost:8000/person/1/",
+    "first_name": "Kris",
+    "last_name": "Kringle",
+    "created": "2014-04-26T18:10:41.077Z",
+    "updated": "2014-04-26T18:10:41.077Z"
+}
+```
+
+For now, we'll leave our Django web application alone and shift to looking at Solr.
 
 # Solr
 
-Let's shift gears for a bit and talk about Solr. Solr is a search engine designed for fast retrieval of records. It also provides handy tools for creating faceted searching. We will be setting up Solr to use as a search engine in our Digital Goudimel project.
+Solr is a search engine designed for fast retrieval of records. It also provides handy tools for creating faceted searching. We will be setting up Solr to use as a search engine in our TimeKeeper project.
 
 ## Getting Started
 
-If you haven't already, you should download the code from my "ToursDemoApplication" folder. In there you will find a `solr` folder. In there you will find one file, `pom.xml` and one folder, `src`. We will build a full instance of Solr using these two files and the `maven` package.
+If you haven't already, you should clone the code from `https://github.com/DDMAL/solr-mvn-template` and place it in your web application folder (you should rename it to something like "solr." This will serve as a template for getting you up and running with Solr.
+
+In there you will find a few files. These contain settings that you should customize for your own application. After changing these files you will build an instance of a Solr search system using `maven`, a build tool for Java applications, and running it through `Tomcat,` a Java web application server. We'll cover this next.
 
 ### Install prerequisites
 
@@ -102,24 +156,36 @@ Before we begin, you should make sure you have Tomcat and Maven installed. I fin
 
 ### Customize the package
 
-The `pom.xml` file contains the build instructions for building a Solr instance with Maven. Before doing this, however, you should make sure you customize it to your specific project. Open it up and change some values for the following tags at the top:
+The `pom.xml` file contains the build instructions for building a Solr instance with Maven. You should make sure you customize it to your specific project. Open it up and change the values for the following tags at the top to match your application.
 
  * groupId
  * artifactId
  * name
  * url
 
+For example, here is what my the beginning of my `pom.xml` file looks like:
+
+```
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>ca.mcgill.music.ddmal.timekeeper</groupId>
+    <artifactId>timekeeper-solr</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <name>TimeKeeper Solr</name>
+    <url>http://ddmal.music.mcgill.ca</url>
+```
+
 Next, look down to the `build` section and change the `finalName` tag to match what you put in the `artifactId`.
 
-Next, let's look in the `src` directory. There are quite a few files in `src/main/resources`, but we will only look at two: `solrconfig.xml` and `schema.xml`. Open up `solrconfig.xml`.
+Next, let's look in the `solr` directory. There are quite a few files in `solr/collection1/conf`, but we will only look at two: `solrconfig.xml` and `schema.xml`. Open up `solrconfig.xml`.
 
-I have had quite a few problems in the past with the value in the `dataDir` tag. Solr tries to be smart about where it stores its data, which may not work due to permissions problems. To prevent problems I find it easiest to specify a folder on my system that Solr can read and write to.
+I have had quite a few problems in the past with the value in the `dataDir` tag. Solr tries to be smart about where it stores its data, bit it may not work due to permissions problems. To prevent problems I find it easiest to specify a folder on my system that Solr can read and write to.
 
-Typically, I set the value to `/var/db/solr/` and then a sub-folder for the specific instance of solr I'm creating. So we should set the value of this to `/var/db/solr/goudimel-solr`. You can put it whereever you like, but it should be a location that is readable and writeable by the same user that owns and runs the `tomcat` server (this varies from system to system, depending on how you have installed tomcat).
+Typically, I set the value to `/var/db/solr/` and then a sub-folder for the specific instance of solr I'm creating. So we should set the value of this to `/var/db/solr/timekeeper-solr`. You can put it where ever you like, but it should be a location that is readable and writeable by the same user that owns and runs the `tomcat` server (this varies from system to system, depending on how you have installed tomcat).
 
 Change it and close `solrconfig.xml`.
 
-We will focus most of our customization work on the `schema.xml` but initially we just need to change one line. Look for the `<schema name=...>` tag and change the name to something descriptive (I use the same value as the `artifactId`).
+We will focus most of our customization work on the `schema.xml` but initially we just need to change one line. Look for the `<schema name=...>` tag and change the name to something descriptive (I use the same value as the `artifactId,` 'timekeeper-solr').
 
 Now we will try to build our Solr instance. Change to the `solr` directory in your project folder (the one with `pom.xml` in it) and run the following command:
 
@@ -131,9 +197,9 @@ After this is finished you will have a new directory, 'target'. In this director
 
 This `.war` file (for "Web Archive") is the built Solr web application, suitable for deployment with Tomcat. Any time we make a change in the `src` directory we will need to re-build this `.war` file by re-running `mvn package`.
 
-On my system the Tomcat `webapps` directory is at `/usr/local/opt/tomcat/libexec/webapps`. We will either need to copy our `.war` file to this, or, even better, create a symbolic link between it so that when we re-build our Solr package it will automatically be re-deployed. To symlink it, change to your tomcat webapps directory and run:
+On my system the Tomcat `webapps` directory is at `/usr/local/Cellar/tomcat/7.0.47/libexec/webapps/`. We will either need to copy our `.war` file to this, or, even better, create a symbolic link between it so that when we re-build our Solr package it will automatically be re-deployed. To symlink it, change to your tomcat webapps directory and run:
 
-`$> ln -s /path/to/your/project/solr/target/goudimel-solr.war .`
+`$> ln -s /path/to/your/project/solr/target/timekeeper-solr.war .`
 
 Now let's start up Tomcat and see if it worked. On my system I start Tomcat with the following command:
 
@@ -141,7 +207,7 @@ Now let's start up Tomcat and see if it worked. On my system I start Tomcat with
 
 (Similarly you can stop Tomcat with `catalina stop`)
 
-Open a web browser and enter the URL: `http://localhost:8080/goudimel-solr/admin/`
+Open a web browser and enter the URL: `http://localhost:8080/timekeeper-solr/`
 
 If all went well, you should see something like this:
 
@@ -157,29 +223,23 @@ There are several field types. All field types present in your schema must be de
 
 In general there are three different field definitions possible. The first is a regular `field`. A field defined like this might look like:
 
-`<field name="type" type="string" indexed="true" stored="true" />`
+`<field name="type" type="string" indexed="true" stored="true" required="true" multiValued="false" />`
 
 In this example, we have a field named "type", with a content type of "string". This field will be both indexed (for searching) and stored (so we can retrieve it later). These last two parameters can be handy for optimizing a search engine. For example, we can index a field, but not store it. This means that we can use it in queries, but we don't necessarily want to be able to retrieve it. The opposite, storing but not indexing, means we can store data in a Solr record but not make it available for searching.
 
 The second field definition is a `dynamicField`. Its definition looks like this:
 
-`<dynamicField name="voice_*" type="string" indexed="true" stored="true"/>`
+`<dynamicField name="*_s" type="string" indexed="true" stored="true"/>`
 
-This looks like the regular field definition, but notice that instead of a regular field name it has a wildcard ('*') as part of the name. This means that this field will accept any fields with a name that matches the prefix.
-
-In the DuChemin project this is used to index a number of "Voice Role" fields. For example, we have indexes for the following fields:
-
-voice_role_above, voice_role_below, voice_role_com1, voice_role_com2, voice_role_dux1, voice_role_dux2, voice_role_fifth, voice_role_fourth... 
-
-and several others. Rather than defining a field for each of these, the `dynamicField` allows us to create new fields "on the fly" as we index our data.
+This looks like the regular field definition, but notice that instead of a regular field name it has a wildcard ('*') as part of the name. This means that this field will accept any fields with a name that matches the prefix, e.g., we can create a dynamic field called "first_name_s". 
 
 Finally, the last field definition is the `copyField`. This is not a field, but rather a way of re-purposing existing fields to process them in a different manner. Consider the following definitions:
 
-`<field name="book_title" type="string" indexed="true" stored="true" />`
-`<field name="tg_book_title" type="text_general" indexed="true" />`
-`<field name="tg_fr_book_title" type="text_fr" indexed="true" />`
+`<field name="title" type="string" indexed="true" stored="true" />`
+`<field name="tg_title" type="text_general" indexed="true" />`
+`<field name="tg_fr_title" type="text_fr" indexed="true" />`
 
-In the first definition we define a field for the book title that stores a book title as a "string" type. This is useful for when we want to display the book title, but not very useful if we want to do full-text search of the fields and do all the things we expect full-text searching to do -- namely, understand that words can have different endings (for plurals). This is called "stemming".
+In the first definition we define a field for the title that stores a book title as a "string" type. This is useful for when we want to display the book title, but not very useful if we want to do full-text search of the fields and do all the things we expect full-text searching to do -- namely, understand that words can have different endings (for plurals). This is called "stemming".
 
 In the second definition we define a "text_general" field that provides these sorts of full-text searching tools. Note that while we index it, we are not storing it for retrieval later.
 
@@ -205,10 +265,10 @@ The last definition uses a "text_fr" field definition that applies proper French
 
 When we import our documents into Solr, we would need to load the Book title into these three fields separately. This is where `copyField` comes in handy. We can define two `copyField` directives in our `fields` section:
 
-`<copyField source="title" dest="tg_piece_title"/>`
-`<copyField source="title" dest="tg_fr_piece_title"/>`
+`<copyField source="title" dest="tg_title"/>`
+`<copyField source="title" dest="tg_fr_title"/>`
 
-The `copyField` takes a single field and copies the contents to another field so that other rules may be applied to it.
+The `copyField` takes a single field and copies the contents to another field so that other indexing rules may be applied to it.
 
 Field types will store, and work, with specific types of data. For example, the "string" type will store a literal string, which makes it a useful field for faceted searches (where all records are grouped according to a string). Number fields, like "int" or "float" allows for sorting and arithmetic, while "date" fields allow for date-range searching ("Fetch records between date A and date B"). As mentioned earlier, "text" fields provide extra functionality for performing full-text searches.
 
@@ -226,50 +286,43 @@ While we have three Models in Django, we can't differentiate between records tha
 
 These two fields will be part of every record, no matter what other fields we choose to store in each document.
 
-At this point you should add fields for every piece of data you wish to store from your Django models. As an example, here is what I have for the `Book` model fields:
+At this point you should add fields for every piece of data you wish to store from your Django models. As an example, here is what I have:
 
 ```
-<field name="publisher" type="string" indexed="true" stored="true"/>
-<field name="published" type="date" indexed="true" stored="true" />
-<field name="rism_id" type="string" indexed="true" stored="true" />
-<field name="cesr_id" type="string" indexed="true" stored="true" />
-<field name="remarks" type="text_general" indexed="true" stored="true" />
-<field name="num_pages" type="int" indexed="true" stored="true" />
+<field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+<field name="type" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+<field name="title" type="text_general" indexed="true" stored="true" />
+<field name="name" type="string" indexed="true" stored="true" />
+<field name="item_id" type="string" indexed="true" stored="true" />
+<field name="start_time" type="date" indexed="true" stored="true"/>
+<field name="end_time" type="date" indexed="true" stored="true"/>
+<field name="first_name" type="string" indexed="true" stored="true" />
+<field name="last_name" type="string" indexed="true" stored="true" />
+<field name="created" type="date" indexed="true" stored="true"/>
+<field name="updated" type="date" indexed="true" stored="true"/>
 ```
 
-Do this for each of your models.
-
-Using dynamic fields and copy fields we can create extra indexes for the data in your model fields.
+You may notice that we are not indexing the latitude/longitude fields on the Place model. This can be handled by the existing dynamicField definitions:
 
 ```
-<dynamicField name="text_fr_*" type="text_fr" indexed="true" stored="true" />
-<dynamicField name="text_gen_*" type="text_general" indexed="true" stored="true" />
-
-<copyField source="phrase_text" dest="text_fr_phrase_text" />
-<copyField source="title" dest="text_fr_title" />
-<copyField source="title" dest="text_gen_title" />
-
-<copyField source="title" dest="text" />
-<copyField source="publisher" dest="text" />
+<!-- Type used to index the lat and lon components for the "location" FieldType -->
+<dynamicField name="*_coordinate"  type="tdouble" indexed="true"  stored="false" />
+<dynamicField name="*_p"  type="location" indexed="true" stored="true"/>
 ```
 
-These definitions will automatically copy the contents of one field and re-index it according to the rules defined for the destination field type. This allows you to, for example, search the title field with both English and French stemming rules.
-
-Re-build your Solr instance and check to make sure it is working in Tomcat.
+You may wish to clean up your `schema.xml` file at this point, commenting out or deleting un-used fields. Re-build your Solr instance and check to make sure it is working in Tomcat.
 
 ## Automatically Indexing Content
 
-The next thing we need to do is to start adding content to the Solr instance from our Django application. We can do this in two ways. The first is to have a separate "indexing" script that periodically runs and copies our data from Django into Solr. This is simple, but it requires manual intervention whenever data changes in our Django application.
-
-A better solution is to automatically index content whenever a record is saved. To do this we will make use of Django's "Signals" feature.
+Now that we have a search engine up and running, we need to start adding content to it, making our data available for searching. We will be building a system to automatically index content whenever a record is created, modified, or deleted from our Django database. To do this we will make use of Django's "Signals" feature to automatically trigger indexing and updating Solr when a database record is modified.
 
 ### Signals
 
-Django signals are an implementation of the 'notification' design pattern. This design pattern allows us to execute multiple actions when a single message, or signal, is triggered.
+Django signals are an implementation of the 'notification' design pattern. This design pattern is event-driven, and can trigger multiple actions when a single message, or signal, is sent based on an action (e.g., a record is created).
 
 When a Django model instance is saved, either when it is created or when it is edited, it will send a notification out. This notification is picked up by any methods that are registered to receive this notification.
 
-This is useful when we want to trigger many actions (like indexing in Solr) when a record is saved, but we don't want to override the `save()` method on that model.
+This is useful when we want to trigger many actions (like indexing in Solr) when a record is saved, but we don't want to override the default `save()` behaviour method on that model.
 
 ### SolrPy
 
@@ -277,13 +330,13 @@ SolrPy is the Python module we will be using to get Django to talk to Solr. Ther
 
 The first thing we need to do is create a setting in our Django application where we can store the address of our Solr server. Open up `settings.py` and add the following line:
 
-`SOLR_SERVER = "http://localhost:8080/goudimel-solr/"`
+`SOLR_SERVER = "http://localhost:8080/timekeeper-solr/"`
 
-That's really all we need to do for now. We will use this setting when we need to work with Solr in our indexing and querying methods.
+We will use this setting when we need to work with Solr in our indexing and querying methods.
 
 ### Indexing Content
 
-Open up your `Book` model file (`models/book.py`). To start using Signals we will need to import some new methods at the top.
+Open up your `Activity` model file (`models/activity.py`). To start using Signals we will need to import some new methods at the top.
 
 Import the following:
 
@@ -295,42 +348,37 @@ from django.db.models.signals import post_save
 Now create a new function in this file. It should be its own function, and not part of the `Book` class.
 
 ```
-@receiver(post_save, sender=Book)
+@receiver(post_save, sender=Activity)
 def solr_index(sender, instance, created, **kwargs):
     import uuid
     from django.conf import settings
     import solr
 
     solrconn = solr.SolrConnection(settings.SOLR_SERVER)
-    record = solrconn.query("type:goudimel_book item_id:{0}".format(instance.id))
+    record = solrconn.query("type:timekeeper_activity item_id:{0}".format(instance.id))
     if record:
-        # the record already exists, so we'll remove it first.
         solrconn.delete(record.results[0]['id'])
 
-    book = instance
+    activity = instance
     d = {
-        'type': 'goudimel_book',
+        'type': 'timekeeper_activity',
         'id': str(uuid.uuid4()),
-        'item_id': book.id,
-        'title': book.title,
-        'publisher': book.publisher,
-        'published': book.published,
-        'rism_id': book.rism_id,
-        'cesr_id': book.cesr_id,
-        'remarks': book.remarks,
-        'num_pages': book.num_pages,
-        'created': book.created,
-        'updated': book.updated
+        'item_id': activity.id,
+        'title': activity.title,
+        'start_time': activity.start_time,
+        'end_time': activity.end_time,
+        'created': activity.created,
+        'updated': activity.updated
     }
     solrconn.add(**d)
     solrconn.commit()
 ```
 
-Let's look at this method a bit more in-depth. The first line of this function is called a Python "decorator". Decorators are handy to know about, but for now it's enough to know that this function is what "registers" the following function for notifications. Notice that the `@receiver` takes two arguments: the notification it will listen for (`post_save`), and the specific model that it listens for notifications from (`Book`).
+Let's look at this method a bit more in-depth. The first line of this function is called a Python "decorator". Decorators are handy to know about, but for now it's enough to know that this function is what "registers" the following function for notifications. Notice that the `@receiver` takes two arguments: the notification it will listen for (`post_save`), and the specific model that it listens for notifications from (`Activity`).
 
-This means that after a Book record has been saved, this `solr_index` function will be called.
+This means that after an Activity record has been saved, this `solr_index` function will be called.
 
-The `solr_index` function takes a number of parameters. The first is a reference to the sender, in this case the Book model. The second is a reference to the specific `instance,` or record that was saved. The other arguments are optional and can be ignored for the moment.
+The `solr_index` function takes a number of parameters. The first is a reference to the sender, in this case the Activity model. The second is a reference to the specific `instance,` or record that was saved. The other arguments are optional and can be ignored for the moment.
 
 The import lines are fairly self-explanatory. Notice that we are importing the `uuid` module to create universally unique IDs for our records.
 
@@ -338,7 +386,7 @@ The import lines are fairly self-explanatory. Notice that we are importing the `
 
 The next few lines will look for an existing record in our Solr system. If we are creating a new record, chances are it will not exist. However, if we are updating an older record the easiest way to deal with it is to delete the old record and then re-add a new one.
 
-Finally, we index the content. We create a key/value dictionary that contains the Solr field that we want to push content into, and the content from our book instance that is being saved as the value. Notice that the keys in our dictionary match the fields that we established in our Solr schema.
+Finally, we index the content. We create a key/value dictionary that contains the Solr field that we want to push content into, and the content from our activity instance that is being saved as the value. Notice that the keys in our dictionary match the fields that we established in our Solr schema.
 
 This is concluded by calling `add` to our Solr server to add the document to the Solr server. It uses a Python idiom that you may not be familiar with:
 
@@ -346,55 +394,55 @@ This is concluded by calling `add` to our Solr server to add the document to the
 
 What this call does is expands the keys and values from our dictionary into arguments for the function call. So:
 
-`d = {'title': "My great book title", "published": "1501-01-01"}`
+`d = {'title': "Jogging", "start_time": "2014-04-27T18:04:02Z"}`
 
 becomes:
 
-`solrconn.add(title="My great book title", published="1501-01-01")`
+`solrconn.add(title="Jogging", start_time="2014-04-27T18:04:02Z")`
 
 I find it a very handy thing to use.
 
-Now that our indexing script is in place, let's test it out. Open a web browser and navigate to the Django admin interface. Add a new book.
+Now that our indexing script is in place, let's test it out. Open a web browser and navigate to the Django admin interface. Add a new activity.
 
-Once you have added it, navigate to your Solr admin interface. You will see a field, "Make a Query" that is filled out with the Solr wildcard search (`*:*`). Click the search button.
+Once you have added it, navigate to your Solr admin interface. Select "collection1" from the drop-down on the left, and then choose the "Query" option. You can leave everything the way it is, and click the "Execute Query" button.
 
 You should see something like this:
 
+![Figure 10](figures/figure10.png)
+
+Success! To get your previously-added activities into Solr you just need to go in and re-save them without changing anything. They will be automatically indexed as you save.
+
+Proceed to do the same thing for your other two models. Remember that you *will* need to change the `type` field to match the record type. I use the pattern "appname_model", so "timekeeper_activity", "timekeeper_person", etc.
+
+### Deleting content
+
+When a record is created or modified, the `post_save` handler will automatically update the Solr record. However, if you should delete a record you will probably want to completely remove it from your Solr index. We will use another Django signal for this:
+
 ```
-<?xml version="1.0" encoding="UTF-8"?>
-<response>
-    <lst name="responseHeader">
-      <int name="status">0</int>
-      <int name="QTime">1</int>
-      <lst name="params">
-        <str name="q">type:goudimel_book</str>
-        <str name="version">2.2</str>
-        <str name="start">0</str>
-        <str name="rows">10</str>
-        <str name="indent">on</str>
-      </lst>
-    </lst>
-    <result name="response" numFound="4" start="0">
-      <doc>
-        <str name="cesr_id">65543</str>
-        <date name="created">2013-11-15T19:00:00Z</date>
-        <str name="id">dea6ce59-c33a-4b55-a95d-fc734eb130a9</str>
-        <str name="item_id">3</str>
-        <date name="published">1999-03-01T00:00:00Z</date>
-        <str name="publisher">Andrew Hankinson</str>
-        <str name="rism_id">24532</str>
-        <str name="text_fr_title">Oeuvres Completes, Volume 3</str>
-        <str name="text_gen_title">Oeuvres Completes, Volume 3</str>
-        <str name="title">Oeuvres Completes, Volume 3</str>
-        <str name="type">goudimel_book</str>
-        <date name="updated">2013-11-15T19:00:00Z</date>
-      </doc>
-    </result>
-</response>
+@receiver(post_delete, sender=Activity)
+def solr_delete(sender, instance, created, **kwargs):
+    from django.conf import settings
+    import solr
+    solrconn = solr.SolrConnection(settings.SOLR_SERVER)
+    record = solrconn.query("type:timekeeper_activity item_id:{0}".format(instance.id))
+    solrconn.delete(record.results[0]['id'])
+    solrconn.commit()
 ```
 
-Success! To get your previously-added books into Solr you just need to go in and re-save them without changing anything. They will be automatically indexed as you save.
+Be sure to import the `post_delete` signal at the top:
 
-Proceed to do the same thing for your other two models. Remember that you *will* need to change the `type` field to match the record type.
+`from django.db.models.signals import post_save, post_delete`
 
-You can see the state of this tutorial with the completed save signals in the "Tutorial-Part2" branch on GitHub.
+Again, do this for every one of your models, changing the field names where appropriate.
+
+# Wrapping up
+
+This part of the tutorial covered the following topics:
+
+ * Serializers, and customized output
+ * Modifiying our templates to display information from related models
+ * Getting, building, and configuring Solr
+ * Customizing the Solr schema for our application
+ * Automatically indexing and deleting records from our application in Solr.
+
+The next part of this tutorial will cover searching and retrieiving records from Solr, and tying them into our web interface.
