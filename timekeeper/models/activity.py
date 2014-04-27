@@ -1,4 +1,7 @@
 from django.db import models
+from django.dispatch import receiver
+from django.db.models.signals import post_save, post_delete
+
 
 class Activity(models.Model):
     class Meta:
@@ -16,3 +19,37 @@ class Activity(models.Model):
 
     def __unicode__(self):
         return u"{0}".format(self.title)
+
+@receiver(post_save, sender=Activity)
+def solr_index(sender, instance, created, **kwargs):
+    import uuid
+    from django.conf import settings
+    import solr
+
+    solrconn = solr.SolrConnection(settings.SOLR_SERVER)
+    record = solrconn.query("type:timekeeper_activity item_id:{0}".format(instance.id))
+    if record:
+        solrconn.delete(record.results[0]['id'])
+
+    activity = instance
+    d = {
+        'type': 'timekeeper_activity',
+        'id': str(uuid.uuid4()),
+        'item_id': activity.id,
+        'title': activity.title,
+        'start_time': activity.start_time,
+        'end_time': activity.end_time,
+        'created': activity.created,
+        'updated': activity.updated
+    }
+    solrconn.add(**d)
+    solrconn.commit()
+
+@receiver(post_delete, sender=Activity)
+def solr_delete(sender, instance, created, **kwargs):
+    from django.conf import settings
+    import solr
+    solrconn = solr.SolrConnection(settings.SOLR_SERVER)
+    record = solrconn.query("type:timekeeper_activity item_id:{0}".format(instance.id))
+    solrconn.delete(record.results[0]['id'])
+    solrconn.commit()
