@@ -20,6 +20,7 @@ class Activity(models.Model):
     def __unicode__(self):
         return u"{0}".format(self.title)
 
+
 @receiver(post_save, sender=Activity)
 def solr_index(sender, instance, created, **kwargs):
     import uuid
@@ -44,6 +45,7 @@ def solr_index(sender, instance, created, **kwargs):
     }
     solrconn.add(**d)
     solrconn.commit()
+
 
 @receiver(post_delete, sender=Activity)
 def solr_delete(sender, instance, created, **kwargs):
