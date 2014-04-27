@@ -56,3 +56,5 @@ docs/_build/
 .DS_Store
 
 app_env/*
+
+target/*
