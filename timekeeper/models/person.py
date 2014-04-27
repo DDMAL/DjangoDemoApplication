@@ -11,5 +11,9 @@ class Person(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
+    @property
+    def full_name(self):
+        return u"{0} {1}".format(self.first_name, self.last_name)
+
     def __unicode__(self):
         return u"{0}, {1}".format(self.last_name, self.first_name)
