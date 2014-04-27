@@ -500,9 +500,23 @@ If a commit will break functioning code that others depend on (e.g., you want to
 
 ### Commits
 
-Most commits should be atomic. That is, they should address one, and only one, issue at a time. You should avoid "bulk" commits that address more than one issue. This makes it harder to trace back to a specific commit that introduced a bug or a change in behaviour in the code.
+Almost all of your commits should be atomic. That is, they should address one, and only one, issue at a time. You should avoid "bulk" commits that address more than one issue. This makes it harder to trace back to a specific commit that introduced a bug or a change in behaviour in the code.
 
 Notable exceptions to this are initial commits, code style cleanup commits, code re-organization commits. If you are starting a new project and have a lot of "boilerplate" code to write (e.g., writing all the models for a Django application, or defining the structure of a class), you may commit these in bulk.
+
+You should avoid committing binary blobs of data, especially if they're a by-product of a building or running process. The following is a partial list of things you should never commit to a repository:
+
+ * Any virtual environment ("virtualenv") folder.
+ * `*.pyc` files. These are automatically generated when a Python script is run.
+ * Database files, especially `.sqlite` files.
+ * Any built or compiled files, e.g., a Solr `.war` file, a `.dylib` file, or a "Frameworks" folder (e.g., `mei.framework/`).
+
+Binary blobs that you may commit include:
+
+ * Images and image data
+ * Small sound files (if they're part of an interface, and not part of a dataset)
+
+To automatically exclude files from your commits, you should establish a `.gitignore` file for your project.
 
 ### Commit messages
 
