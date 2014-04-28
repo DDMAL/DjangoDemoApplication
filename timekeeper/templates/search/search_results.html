@@ -1,0 +1,27 @@
+{% if content.results.numFound > 0 %}
+    <div class="list-group">
+    {% for result in content.results.results %}
+        {% if result.type == "timekeeper_activity" %}
+            <a href="/activity/{{ result.item_id }}" class="list-group-item">
+                <span class="label label-primary pull-right">Activity</span>
+                <h4>{{ result.title }}</h4>
+                <p class="list-group-item-text">Started: {{ result.start_time }} Ended: {{ result.end_time }}</p>
+            </a>
+        {% elif result.type == "timekeeper_place" %}
+            <a href="/place/{{ result.item_id }}" class="list-group-item">
+                <span class="label label-success pull-right">Place</span>
+                <h4>{{ result.name }}</h4>
+                <p class="list-group-item-text">Location: {{ result.latitude_coordinates }}, {{ result.longitude_coordinates }} </p>
+            </a>
+        {% elif result.type == "timekeeper_person" %}
+            <a href="/person/{{ result.item_id }}" class="list-group-item">
+                <span class="label label-info pull-right">Person</span>
+                <h4>{{ result.last_name }}, {{ result.first_name }}</h4>
+                <p class="list-group-item-text"></p>
+            </a>
+        {% endif %}
+    {% endfor %}
+    </div>
+{% else %}
+    <h5>No Results found.</h5>
+{% endif %}

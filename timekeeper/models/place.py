@@ -25,7 +25,7 @@ def solr_index(sender, instance, created, **kwargs):
     import solr
 
     solrconn = solr.SolrConnection(settings.SOLR_SERVER)
-    record = solrconn.query("type:timekeeper_place item_id:{0}".format(instance.id))
+    record = solrconn.query("type:timekeeper_place item_id:{0}".format(instance.id), q_op="AND")
     if record:
         solrconn.delete(record.results[0]['id'])
 
@@ -49,6 +49,6 @@ def solr_delete(sender, instance, created, **kwargs):
     from django.conf import settings
     import solr
     solrconn = solr.SolrConnection(settings.SOLR_SERVER)
-    record = solrconn.query("type:timekeeper_place item_id:{0}".format(instance.id))
+    record = solrconn.query("type:timekeeper_place item_id:{0}".format(instance.id), q_op="AND")
     solrconn.delete(record.results[0]['id'])
     solrconn.commit()

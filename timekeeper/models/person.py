@@ -29,7 +29,7 @@ def solr_index(sender, instance, created, **kwargs):
     import solr
 
     solrconn = solr.SolrConnection(settings.SOLR_SERVER)
-    record = solrconn.query("type:timekeeper_person item_id:{0}".format(instance.id))
+    record = solrconn.query("type:timekeeper_person item_id:{0}".format(instance.id), q_op="AND")
     if record:
         solrconn.delete(record.results[0]['id'])
 
@@ -39,7 +39,7 @@ def solr_index(sender, instance, created, **kwargs):
         'id': str(uuid.uuid4()),
         'item_id': person.id,
         'first_name': person.first_name,
-        'start_time': person.last_name,
+        'last_name': person.last_name,
         'created': person.created,
         'updated': person.updated
     }
@@ -52,6 +52,6 @@ def solr_delete(sender, instance, created, **kwargs):
     from django.conf import settings
     import solr
     solrconn = solr.SolrConnection(settings.SOLR_SERVER)
-    record = solrconn.query("type:timekeeper_person item_id:{0}".format(instance.id))
+    record = solrconn.query("type:timekeeper_person item_id:{0}".format(instance.id), q_op="AND")
     solrconn.delete(record.results[0]['id'])
     solrconn.commit()

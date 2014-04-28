@@ -4,6 +4,7 @@ from timekeeper.renderers.custom_html_renderer import CustomHTMLRenderer
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework import generics
 
+
 class ActivityListHTMLRenderer(CustomHTMLRenderer):
     template_name = "activity/activity_list.html"
 

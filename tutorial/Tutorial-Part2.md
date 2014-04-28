@@ -345,7 +345,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 ```
 
-Now create a new function in this file. It should be its own function, and not part of the `Book` class.
+Now create a new function in this file. It should be its own function, and not part of the `Activity` model.
 
 ```
 @receiver(post_save, sender=Activity)
@@ -355,7 +355,7 @@ def solr_index(sender, instance, created, **kwargs):
     import solr
 
     solrconn = solr.SolrConnection(settings.SOLR_SERVER)
-    record = solrconn.query("type:timekeeper_activity item_id:{0}".format(instance.id))
+    record = solrconn.query("type:timekeeper_activity item_id:{0}".format(instance.id), q_op="AND")
     if record:
         solrconn.delete(record.results[0]['id'])
 
@@ -384,7 +384,7 @@ The import lines are fairly self-explanatory. Notice that we are importing the `
 
 `solrconn` is the call that establishes a connection to our Solr server. We can use the setting from our `settings.py` that we created earlier.
 
-The next few lines will look for an existing record in our Solr system. If we are creating a new record, chances are it will not exist. However, if we are updating an older record the easiest way to deal with it is to delete the old record and then re-add a new one.
+The next few lines will look for an existing record in our Solr system. If we are creating a new record, chances are it will not exist. However, if we are updating an older record the easiest way to deal with it is to delete the old record and then re-add a new one. By default, Solr uses an "OR" operator, so we must explicitly specify the "AND" query operator (`q_op`) for this operation.
 
 Finally, we index the content. We create a key/value dictionary that contains the Solr field that we want to push content into, and the content from our activity instance that is being saved as the value. Notice that the keys in our dictionary match the fields that we established in our Solr schema.
 
@@ -424,7 +424,7 @@ def solr_delete(sender, instance, created, **kwargs):
     from django.conf import settings
     import solr
     solrconn = solr.SolrConnection(settings.SOLR_SERVER)
-    record = solrconn.query("type:timekeeper_activity item_id:{0}".format(instance.id))
+    record = solrconn.query("type:timekeeper_activity item_id:{0}".format(instance.id), q_op="AND")
     solrconn.delete(record.results[0]['id'])
     solrconn.commit()
 ```

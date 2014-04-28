@@ -108,7 +108,7 @@
         
    <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
    <field name="type" type="string" indexed="true" stored="true" required="true" multiValued="false" />
-   <field name="title" type="text_general" indexed="true" stored="true" />
+   <field name="title" type="string" indexed="true" stored="true" />
    <field name="name" type="string" indexed="true" stored="true" />
    <field name="item_id" type="string" indexed="true" stored="true" />
    <field name="start_time" type="date" indexed="true" stored="true"/>
@@ -251,7 +251,12 @@
         is added to the index.  It's used either to index the same field differently,
         or to add multiple fields to the same field for easier/faster searching.  -->
 
-<!--    <copyField source="cat" dest="text"/>
+  <copyField source="first_name" dest="text" />
+  <copyField source="last_name" dest="text" />
+  <copyField source="name" dest="text" />
+  <copyField source="title" dest="text" />
+
+<!--<copyField source="cat" dest="text"/>
    <copyField source="name" dest="text"/>
    <copyField source="manu" dest="text"/>
    <copyField source="features" dest="text"/>

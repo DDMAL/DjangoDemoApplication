@@ -487,6 +487,17 @@ Use descriptive parameter names that are not abbreviated.
 
 ---
 
+*Python Only* Use formatting strings, not printf-like statements.
+
+##### Right:
+
+    "This will be {0} in the string".format("inserted")
+
+##### Wrong:
+
+    "This will be %s in the string" % "inserted"
+
+---
 
 ## Version Control Usage
 
