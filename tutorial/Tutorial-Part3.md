@@ -18,7 +18,7 @@ What the code in these files do will become apparent later.
 
 Next, let's create our search view and map it in our URLs file. Create a new file, `views/search.py`:
 
-```
+```python
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -40,7 +40,7 @@ class SearchView(APIView):
 
 This should look familiar -- it is the same structure we created for our other views. Notice that we're using the same `CustomHTMLRenderer` helper, and we reference a few files and classes we have not created yet. We'll get to these in a moment, but first we will connect this view up in our `urls.py` file. Add a new URL mapping:
 
-```
+```python
 from timekeeper.views.search import SearchView
 ...
 url(r'^search/$', SearchView.as_view(), name="search-view"),
@@ -49,7 +49,7 @@ url(r'^search/$', SearchView.as_view(), name="search-view"),
 
 Now we can get to creating the missing code we referenced in our view. Let's create the SearchSerializer by creating a new file, `serializers/search.py` and adding the following code:
 
-```
+```python
 from rest_framework import serializers
 
 
@@ -63,7 +63,7 @@ Next, create the templates for the HTML views. Create a new folder, `templates/s
 
 In `search.html` we will create a simple search form:
 
-```
+```html+django
 {% extends "base.html" %}
 
 {% block body %}
@@ -91,7 +91,7 @@ Notice that this form includes the `search_results.html` template if there are a
 
 In `search_results.html` place the following template code:
 
-```
+```html+django
 {% if content.results.numFound > 0 %}
     {% for result in content.results.results %}
         <div class="row">
@@ -119,7 +119,7 @@ To understand what's going on here, we'll retun to our previous conversation abo
 
 It turns out that there are a lot of "hidden" methods on our previous views that we took for granted. If you have a look at your previous views, you will see that we're sub-classing a different view than the one that we're subclassing in our `SearchView` class. For example:
 
-```
+```python
 class ActivityList(generics.ListCreateAPIView):
 ```
 
@@ -129,7 +129,7 @@ Since we're writing a generic view for our `SearchView,` we have not yet supplie
 
 To fix this, let's add a very simple `get` method to our `SearchView`:
 
-```
+```python
     def get(self, request, *args, **kwargs):
         return Response({})
 ```
@@ -150,7 +150,7 @@ We can use this to start passing on search terms to Solr.
 
 To start performing searches on our data, we'll need to modify the behaviour of our `get` method to pass parameters on to Solr, and to manage the results. Change your `SearchView` `get` method to the following:
 
-```
+```python
     def get(self, request, *args, **kwargs):
         querydict = request.GET
         if not querydict:
@@ -170,7 +170,7 @@ There's a lot of stuff here, so let's go through this statement-by-statement.
 
 The `request` object contains all information about the request being sent to the server, including any query parameters passed along with a GET request. These are stored in a key/value dictionary which you can retrieve using the `GET` property.
 
-```
+```python
 if not querydict:
     return Response({'results': []})
 ```
@@ -191,7 +191,7 @@ This executes the search, using the query parameters. We can modify the behaviou
 
 This creates a 'results' dictionary that contains the search results. This is in preparation for sending it back to the template layer to be rendered.
 
-```
+```python
 response = Response(result)
 return response
 ```
@@ -202,7 +202,7 @@ To test our query system, you can place an asterisk ('wildcard') in the search f
 
 Let's also try this on our command-line cURL interface:
 
-```
+```bash
 $> curl -XGET -H "Accept: application/json" "http://localhost:8000/search/?q=*"
 {
     "results": [
@@ -232,7 +232,7 @@ To understand why, let's return to the `solrconfig.xml` file in our Solr search 
 
 In my system, it looks like this:
 
-```
+```xml
   <requestHandler name="/select" class="solr.SearchHandler">
     <!-- default values for query parameters can be specified, these
          will be overridden by parameters in the request
@@ -249,13 +249,13 @@ Notice the `<str name="df">text</str>` line. This line configures the default fi
 
 Let's now return to our `schema.xml` file. Find the line that defines this field:
 
-```
+```xml
 <field name="text" type="text_general" indexed="true" stored="false" multiValued="true"/>
 ```
 
 This field type is `text_general`, which means that there are several processes being applied to the content of this field in order to make it available for search. To see which processes are being applied to it, you can look up the definition for the `text_general` field in the `schema.xml` file:
 
-```
+```xml
 <!-- A general text field that has reasonable, generic
          cross-language defaults: it tokenizes with StandardTokenizer,
      removes stop words from case-insensitive "stopwords.txt"
@@ -283,7 +283,7 @@ So, to search on all our records we will need to copy the data from our dedicate
 
 Like this:
 
-```
+```xml
 <copyField source="first_name" dest="text" />
 <copyField source="last_name" dest="text" />
 <copyField source="name" dest="text" />
@@ -298,7 +298,7 @@ So far we can retrieve the records from our Solr server, but they look pretty ba
 
 Open up your templates `search/search_results.html` file. You can check out the various styles and tools for use in the Bootstrap documentation. Here's what mine looks like:
 
-```
+```html+django
 {% if content.results.numFound > 0 %}
     <div class="list-group">
     {% for result in content.results.results %}
@@ -338,7 +338,7 @@ One of the nicest things about Solr is that it does most of the work for viewing
 
 First, we need to slightly modify our `SearchView` view to include a faceted query search. Change the `get` method to add a few lines:
 
-```
+```python
     def get(self, request, *args, **kwargs):
         querydict = request.GET
 
@@ -360,7 +360,7 @@ The facets we are including in this search are on the name, title, and last_name
 
 Let's look at the response we get from the search system now, by using our cURL interface. First, an empty search:
 
-```
+```bash
 $> curl -XGET -H "Accept: application/json" "http://localhost:8000/search/"
 {
     "facets": 
@@ -397,7 +397,7 @@ This looks mostly OK. You can see that we have a number of facet fields returned
 
 Luckily, fixing it is pretty easy. Return to your Solr `schema.xml` and find your `title` field. Change the type from `text_general` to `string`, save, and re-build Solr. Then go in your Django admin interface and re-save all of your activity models. Now the same search returns something a bit more useful:
 
-```
+```bash
 $> curl -XGET -H "Accept: application/json" "http://localhost:8000/search/"
 {
     "facets": 
