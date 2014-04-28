@@ -68,8 +68,7 @@ We will start by installing some required modules (you must have your virtual en
 2. Django Rest Framework: `$> pip install djangorestframework`
 3. Solrpy: `$> pip install solrpy`
 4. ipython: `$> pip install ipython`
-5. South: `$> pip install South`
-6. Django Extensions `$> pip install django_extensions`
+5. Django Extensions `$> pip install django_extensions`
 
 `ipython` is a replacement interpreter for Python that makes it easier to work with Python on the command line.
 
