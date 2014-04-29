@@ -195,7 +195,7 @@ You may have noticed, however, that there are two parts missing from this. We ca
 
 All web clients operate over the HyperText Transfer Protocol. This protocol is stateless, meaning that for each request, enough information must be sent from the client to the server so that the server can fulfill the request -- no context information about a client is "stored" on the server. To send this information, a HTTP request contains several "header" fields that describe the client and the nature of the content being requested.
 
-One of the most important request parameters is the action that is sent with a request (which we will call "verbs"). Two of these will be familiar with you if you have done any form processing on the web, while the other two will likely not:
+One of the most important request parameters is the action that is sent with a request (which we will call "verbs"). Two of these will be familiar to you if you have done any form processing on the web, while the other two will likely not:
 
  * `GET`
  * `POST`
@@ -208,7 +208,7 @@ So our first example can be rewritten as:
 
 `GET http://example.com/place/123`
 
-We will skip `POST` for a moment and discuss `PATCH` and `DELETE`. These are used to sent commands for editing ("PATCHing") a record, and deleting a record. This is applied rather intuitively:
+We will skip `POST` for a moment and discuss `PATCH` and `DELETE`. These are used to send commands for editing ("PATCHing") a record, and deleting a record. This is applied rather intuitively:
 
 `PATCH http://example.com/place/123`
 
