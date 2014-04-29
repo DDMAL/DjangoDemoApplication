@@ -27,6 +27,49 @@ The biggest exception to all of these guidelines is that, should you find yourse
 
 3. [Keep Comments Clear and Up-to-date](http://legacy.python.org/dev/peps/pep-0008/#id20).
 
+5. [Limit Nested Statements](http://programmers.stackexchange.com/questions/52685/if-you-need-more-than-3-levels-of-indentation-youre-screwed). Nested `if`s, `for`s, `while`s, and `switch`es should be limited to three levels, not more. If you find yourself exceeding this limit, you should investigate ways of collapsing it. Long, nested code blocks are hard to read, and, more importantly, hard to debug.
+
+In some cases, you can mitigate this by exiting early. So, for example, instead of this:
+
+```python
+if foo:
+    // do lots of bar
+    // over many many lines
+    // and stuff
+    return something
+else:
+    // do baz
+    // over many lines
+    return anotherthing
+```
+
+You might consider re-factoring it to:
+
+```python
+if not foo:
+    // do baz
+    // over many lines
+    return anotherthing
+
+// do lots of bar
+// over many many lines
+// and stuff
+return something
+```
+
+In other cases, you might consider creating helper functions, or employing [list comprehensions](http://www.diveintopython3.net/comprehensions.html) to reduce loop blocks:
+
+```python
+mylist = []
+for x in blah:
+    if munge_ex(x) = something:
+        mylist.append(x)
+```
+
+```python
+mylist = [x for x in blah if munge_ex(x) = something]
+```
+
 4. [Follow Naming Conventions](http://legacy.python.org/dev/peps/pep-0008/#id20). For Python, variables and functions should be all lower-case and separated by underscores. Class names should be CapWords. Example:
 
 ```
