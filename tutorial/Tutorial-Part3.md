@@ -427,3 +427,12 @@ $> curl -XGET -H "Accept: application/json" "http://localhost:8000/search/"
     "results": []
 }
 ```
+
+So, now we are retrieving data from our Solr search system. We should make this usable in the HTML interface.
+
+## Theming Facets
+
+We will be displaying our faceted browser in a sidebar on our search page. Open up your `templates/search/search.html`.
+
+
+
