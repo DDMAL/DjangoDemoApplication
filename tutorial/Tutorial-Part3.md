@@ -546,3 +546,4 @@ Looks like it works! Notice that our facets on the side automatically update the
 
 This was translated using our `SolrSearch` helper class to execute a search for all records where the last name matched "Kringle." We only have one example in here now, so we're only seeing one record.
 
+With that, it's time to wrap up our tutorial. Part 4 of this tutorial will re-cap what we've learned
