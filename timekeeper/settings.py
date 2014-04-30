@@ -90,5 +90,4 @@ REST_FRAMEWORK = {
     ),
 }
 
-SOLR_SERVER = "http://localhost:8080/timekeeper-solr/"
-
+SOLR_SERVER = "http://localhost:8080/timekeeper-solr"
