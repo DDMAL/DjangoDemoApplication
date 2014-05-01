@@ -393,7 +393,7 @@ We will need at least one serializer for every model we create. In the `serializ
 from timekeeper.models.activity import Activity
 from rest_framework import serializers
 
-class ActivitySerializer(serializers.HyperLinkedModelSerializer):
+class ActivitySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Activity
 ```
@@ -404,7 +404,7 @@ class ActivitySerializer(serializers.HyperLinkedModelSerializer):
 from timekeeper.models.person import Person
 from rest_framework import serializers
 
-class PersonSerializer(serializers.HyperLinkedModelSerializer):
+class PersonSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Person
 ```
@@ -415,7 +415,7 @@ class PersonSerializer(serializers.HyperLinkedModelSerializer):
 from timekeeper.models.place import Place
 from rest_framework import serializers
 
-class PlaceSerializer(serializers.HyperLinkedModelSerializer):
+class PlaceSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Place
 ```
