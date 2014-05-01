@@ -709,6 +709,8 @@ Once all of this is in place, make sure your develoment server is still running 
 
 ![Figure 5](figures/figure5.png)
 
+
+Note: Make sure to use Google Chrome because the links may not work in Safari.
 This is the beginning of our API! Clicking on any of the links will bring you to a blank page, but that's because we have no content in our system yet.
 
 # The Django Admin interface
