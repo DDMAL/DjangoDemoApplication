@@ -427,3 +427,123 @@ $> curl -XGET -H "Accept: application/json" "http://localhost:8000/search/"
     "results": []
 }
 ```
+
+So, now we are retrieving data from our Solr search system. We should make this usable in the HTML interface.
+
+## Theming Facets
+
+We will be displaying our faceted browser in a sidebar on our search page. Open up your `templates/search/search.html`. In my version, there is a column of width 8 (`<div class="col-md-8">`) where the search box and results are displayed. This leaves us room to put in a 4-wide column as a sidebar for displaying the facets:
+
+```django+html
+    <div class="col-md-4">
+        {% if content.facets %}
+            <h2>Facets</h2>
+            {% for name, facets in content.facets.facet_fields.items %}
+            <div class="row">
+                <h4>{{ name }}</h4>
+                <ul>
+                    {% for facet, count in facets.items %}
+                        <li><a class="facet-link" href="#" data-facet-name="{{ name }}" data-facet-value="{{ facet }}">{{ facet }} </a> ({{ count }})</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+```
+
+If you save and reload your page, you should end up with something like this:
+
+![Figure 13](figures/figure13.png)
+
+Of course, clicking on the facet name will not do anything. For that, we need a bit of JavaScript to manage our clicking events.
+
+## Dynamic Facets
+
+In this example, we will be using JavaScript to read and manipulate the URL so that clicking on a facet will automatically execute a query for us. The first thing we need is a small JavaScript plugin to help parse the query parameters. Open up your `static/js/scripts.js` file and place the following code in there:
+
+```javascript
+/**
+ * $.parseParams - parse query string paramaters into an object.
+ */
+(function($)
+{
+    var re = /([^&=]+)=?([^&]*)/g;
+    var decodeRE = /\+/g;  // Regex for replacing addition symbol with a space
+    var decode = function (str) {return decodeURIComponent( str.replace(decodeRE, " ") );};
+    $.parseParams = function(query)
+    {
+        var params = {}, e;
+        while ( e = re.exec(query) )
+        { 
+            var k = decode( e[1] ), v = decode( e[2] );
+            if (k.substring(k.length - 2) === '[]')
+            {
+                k = k.substring(0, k.length - 2);
+                (params[k] || (params[k] = [])).push(v);
+            }
+            else params[k] = v;
+        }
+        return params;
+    };
+})(jQuery);
+```
+
+This small plugin converts the query parameters from the location bar (where the page URL is) to a JavaScript object.
+
+Next, let's go back to our `templates/search/search.html` and add the following JavaScript:
+
+```javascript
+<script type="text/javascript">
+    // this code manages what happens when a facet link is clicked.
+    $(".facet-link").on('click', function(event)
+    {
+        var qstr = window.location.search.replace("?", "");
+        var qstr_params = $.parseParams(qstr);
+
+        var facetName = $(this).data('facet-name');
+        var facetValue = $(this).data('facet-value');
+        if (!(facetName in qstr_params))
+        {
+            var facetQ = facetName + "=" + facetValue;
+            if (qstr != "")
+            {
+                // this makes sure that we either append the 
+                // querystring to an existing query string
+                // (with a "&") or we just append it to the
+                // existing URL.
+                facetQ = "&" + facetQ;
+            }
+
+            window.location.search = qstr + facetQ;
+        }
+        event.preventDefault();
+    });
+</script>
+```
+
+This chunk of code sets a `click` event handler on all the HTML elements identified as a '.facet-link'. If you look at the links that we are generating, you will see that each link is already identified as a `facet-link`. 
+
+This function first checks the value of the URL in the location bar, and removes the leading `?`, then parses the parameters into a JavaScript object using the plugin we just installed. It then checks the facet name and value by reading from the `data` value on the object.
+
+The `data` value is a neat HTML attribute that you should learn how to use. If you create an attribute that is prefixed with the word `data-`, the value you place in this attribute will become available in that element's `data()` storage in JavaScript, accessible by the key that you used without the prefix. For example:
+
+`<p id="para1" data-my-great-data="AMAZING!"></p>`
+
+Can be read in JavaScript with:
+
+`$('#para1').data('my-great-data')  // "AMAZING!"`
+
+The function then checks to see if the facet that we're clicking is not already present in the URL (i.e., we haven't clicked on it before), and modifies the location bar to reflect the clicked facet. 
+
+Let's try it out now. Refresh your page, and click on a facet. I get something like this:
+
+![Figure 14](figures/figure14.png)
+
+Looks like it works! Notice that our facets on the side automatically update themselves. Even more importantly, notice what happened in the location bar:
+
+`http://localhost:8000/search/?last_name=Kringle#`
+
+This was translated using our `SolrSearch` helper class to execute a search for all records where the last name matched "Kringle." We only have one example in here now, so we're only seeing one record.
+
+With that, it's time to wrap up our tutorial. Part 4 of this tutorial will re-cap what we've learned
