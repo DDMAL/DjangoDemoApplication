@@ -179,7 +179,7 @@ Next, look down to the `build` section and change the `finalName` tag to match w
 
 Next, let's look in the `solr` directory. There are quite a few files in `solr/collection1/conf`, but we will only look at two: `solrconfig.xml` and `schema.xml`. Open up `solrconfig.xml`.
 
-I have had quite a few problems in the past with the value in the `dataDir` tag. Solr tries to be smart about where it stores its data, bit it may not work due to permissions problems. To prevent problems I find it easiest to specify a folder on my system that Solr can read and write to.
+I have had quite a few problems in the past with the value in the `dataDir` tag. Solr tries to be smart about where it stores its data, but it may not work due to permissions problems. To prevent problems I find it easiest to specify a folder on my system that Solr can read and write to.
 
 Typically, I set the value to `/var/db/solr/` and then a sub-folder for the specific instance of solr I'm creating. So we should set the value of this to `/var/db/solr/timekeeper-solr`. You can put it where ever you like, but it should be a location that is readable and writeable by the same user that owns and runs the `tomcat` server (this varies from system to system, depending on how you have installed tomcat).
 
