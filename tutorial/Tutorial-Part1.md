@@ -316,7 +316,7 @@ class Activity(models.Model):
     title = models.CharField(max_length=255, blank=True, null=True)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
-    location = models.ForeignKey("timekeeper.Place")
+    place = models.ForeignKey("timekeeper.Place")
     partner = models.ForeignKey("timekeeper.Person", blank=True, null=True)
 
     created = models.DateTimeField(auto_now_add=True)
