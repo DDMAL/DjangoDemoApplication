@@ -21,7 +21,7 @@ $> curl -XGET -H "Accept: application/json" http://localhost:8000/activity/1/
 }
 ```
 
-To get the book title, we can embed a place serializer within our piece serializer. Open up `serializers/activity.py` and create a new serializer for your place data. Your file should look like this:
+To get the place name, we can embed a place serializer within our activity serializer. Open up `serializers/activity.py` and create a new serializer for your place data. Your file should look like this:
 
 ```
 from timekeeper.models.activity import Activity
