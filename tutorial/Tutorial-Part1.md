@@ -984,7 +984,7 @@ Edit your `base.html` file to include these files like this:
         <div class="page-header">
             <div class="row">
                 <div class="col-md-2">
-                    <img src="{{ STATIC_URL }}img/timekeeper.png" />
+                    <img src="{{ STATIC_URL }}img/timekeeper.jpg" />
                 </div>
                 <div class="col-md-10">
                     <h1>TimeKeeper</h1>
