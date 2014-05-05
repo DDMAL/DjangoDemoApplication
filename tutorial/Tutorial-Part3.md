@@ -181,7 +181,7 @@ This statement defines the behaviour of the page if there are no query parameter
 
 This is a big one. Remember the file we created previously, `helpers/solrsearch.py`? This is a helper method for performing a search against a Solr server. Open this file and have a look at the `SolrSearch` class.
 
-When this class is initialized it takes a `request` object and parses out the query strings (L67) from the request. Query strings are everything that comes after a `?` in a URL. Initializing this class with the request method parses the request an prepares it for executing a search.
+When this class is initialized it takes a `request` object and parses out the query strings (L67) from the request. Query strings are everything that comes after a `?` in a URL. Initializing this class with the request method parses the request and prepares it for executing a search.
 
 `s.search()`
 
@@ -312,7 +312,7 @@ Open up your templates `search/search_results.html` file. You can check out the 
             <a href="/place/{{ result.item_id }}" class="list-group-item">
                 <span class="label label-success pull-right">Place</span>
                 <h4>{{ result.name }}</h4>
-                <p class="list-group-item-text">Location: {{ result.latitude_coordinates }}, {{ result.longitude_coordinates }} </p>
+                <p class="list-group-item-text">Location: {{ result.latitude_coordinate }}, {{ result.longitude_coordinate }} </p>
             </a>
         {% elif result.type == "timekeeper_person" %}
             <a href="/person/{{ result.item_id }}" class="list-group-item">
@@ -327,7 +327,6 @@ Open up your templates `search/search_results.html` file. You can check out the 
     <h5>No Results found.</h5>
 {% endif %}
 ```
-
 This is a nice beginning.
 
 ## Faceted Searching
