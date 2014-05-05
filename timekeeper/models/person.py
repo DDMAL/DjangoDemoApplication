@@ -48,7 +48,7 @@ def solr_index(sender, instance, created, **kwargs):
 
 
 @receiver(post_delete, sender=Person)
-def solr_delete(sender, instance, created, **kwargs):
+def solr_delete(sender, instance, **kwargs):
     from django.conf import settings
     import solr
     solrconn = solr.SolrConnection(settings.SOLR_SERVER)

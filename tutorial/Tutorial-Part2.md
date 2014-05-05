@@ -374,7 +374,7 @@ def solr_index(sender, instance, created, **kwargs):
     solrconn.commit()
 ```
 
-Let's look at this method a bit more in-depth. The first line of this function is called a Python "decorator". Decorators are handy to know about, but for now it's enough to know that this function is what "registers" the following function for notifications. Notice that the `@receiver` takes two arguments: the notification it will listen for (`post_save`), and the specific model that it listens for notifications from (`Activity`).
+Let's look at this method a bit more in-depth. The first line of this function is called a Python "decorator". Decorators are handy to know about, but for now it's enough to know that this function is what "registers" the following function for notifications. Notice that the `@receiver` takes two arguments: the notification it will listen for ([post_save](https://docs.djangoproject.com/en/dev/ref/signals/#post-save)), and the specific model that it listens for notifications from (`Activity`).
 
 This means that after an Activity record has been saved, this `solr_index` function will be called.
 
@@ -416,11 +416,11 @@ Proceed to do the same thing for your other two models. Remember that you *will*
 
 ### Deleting content
 
-When a record is created or modified, the `post_save` handler will automatically update the Solr record. However, if you should delete a record you will probably want to completely remove it from your Solr index. We will use another Django signal for this:
+When a record is created or modified, the `post_save` handler will automatically update the Solr record. However, if you should delete a record you will probably want to completely remove it from your Solr index. We will use another Django signal ([post_delete](https://docs.djangoproject.com/en/dev/ref/signals/#post-delete)) for this:
 
 ```
 @receiver(post_delete, sender=Activity)
-def solr_delete(sender, instance, created, **kwargs):
+def solr_delete(sender, instance, **kwargs):
     from django.conf import settings
     import solr
     solrconn = solr.SolrConnection(settings.SOLR_SERVER)
