@@ -19,6 +19,8 @@ That said, there are some rules that you are expected to adhere to in writing yo
 
 The biggest exception to all of these guidelines is that, should you find yourself working on a file that does not adhere to these practices, that you follow the style in that file first and foremost.
 
+You may consider using an editor that does a lot of this work for you. The Sublime Text editor is preferred in the lab, and the SublimeLinter package for it has a number of modules for following formatting best-practices for various languages.
+
 ### General Principles
 
 1. [Spaces, not Tabs](http://legacy.python.org/dev/peps/pep-0008/#code-lay-out). This applies for *all* code you write. You must set your editor to insert four spaces per tab character.
