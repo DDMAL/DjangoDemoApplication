@@ -673,6 +673,8 @@ or in the case of multiple issues, like this:
 
 If you have a GitHub repository, you should maintain a list of all features, bugs, and support requests in the Issue tracker for that project. You should establish a taxonomy system for your issues that allow you to differentiate between different types of issues, e.g., between "server" and "client" issues, or between "bugs" and "feature requests".
 
+As a general rule you should file an issue for every feature, bug, or change that you are working on. GitHub features some neat integration tools between commits and issues, allowing you to link the work you do in your code to a specific issue. You should [check out the documentation](https://help.github.com/articles/closing-issues-via-commit-messages) for these features and use them.
+
 ### Documentation
 
 The GitHub Wiki system is the most appropriate place for any documentation that you write. Please keep your documentation up to date.
