@@ -129,7 +129,7 @@ Use spaces, not tabs. Tabs should only appear in files that require them for sem
 
     function main()
     {
-\t  \t  return 0;
+        return 0;
     }
 
 ---
