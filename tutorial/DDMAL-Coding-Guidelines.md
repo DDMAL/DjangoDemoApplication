@@ -19,6 +19,8 @@ That said, there are some rules that you are expected to adhere to in writing yo
 
 The biggest exception to all of these guidelines is that, should you find yourself working on a file that does not adhere to these practices, that you follow the style in that file first and foremost.
 
+You may consider using an editor that does a lot of this work for you. The Sublime Text editor is preferred in the lab, and the SublimeLinter package for it has a number of modules for following formatting best-practices for various languages.
+
 ### General Principles
 
 1. [Spaces, not Tabs](http://legacy.python.org/dev/peps/pep-0008/#code-lay-out). This applies for *all* code you write. You must set your editor to insert four spaces per tab character.
@@ -129,7 +131,7 @@ Use spaces, not tabs. Tabs should only appear in files that require them for sem
 
     function main()
     {
-\t  \t  return 0;
+        return 0;
     }
 
 ---
@@ -670,6 +672,8 @@ or in the case of multiple issues, like this:
 ## Issue Management and Tracking
 
 If you have a GitHub repository, you should maintain a list of all features, bugs, and support requests in the Issue tracker for that project. You should establish a taxonomy system for your issues that allow you to differentiate between different types of issues, e.g., between "server" and "client" issues, or between "bugs" and "feature requests".
+
+As a general rule you should file an issue for every feature, bug, or change that you are working on. GitHub features some neat integration tools between commits and issues, allowing you to link the work you do in your code to a specific issue. You should [check out the documentation](https://help.github.com/articles/closing-issues-via-commit-messages) for these features and use them.
 
 ### Documentation
 
