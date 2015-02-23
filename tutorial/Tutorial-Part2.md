@@ -306,7 +306,7 @@ You may notice that we are not indexing the latitude/longitude fields on the Pla
 
 ```
 <!-- Type used to index the lat and lon components for the "location" FieldType -->
-<dynamicField name="*_coordinate"  type="tdouble" indexed="true"  stored="false" />
+<dynamicField name="*_coordinate"  type="tdouble" indexed="true"  stored="true" />
 <dynamicField name="*_p"  type="location" indexed="true" stored="true"/>
 ```
 

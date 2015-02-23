@@ -125,7 +125,7 @@ Next, we know that we would like this web application to serve data for both hum
 
 Finally, we will want to add a Solr search engine to this application, to allow us to search and retrieve items in our database quickly. In the real world, a system of this scale will not need Solr, but we will construct one anyway as an example.
 
-## Model-View-Controller (or Model-Controller-Template in Django)
+## Model-View-Controller (or Model-Template-View in Django)
 
 Django uses the Model-View-Controller (MVC) paradigm, but it is important to note that it (confusingly) renames the concepts to Model-Template-View (MTV). Despite the change in name, the way they work is the same. (I will use the Django version of the names, just so you don't get confused, but I will include the "traditional" name for them in parentheses).
 
@@ -984,7 +984,7 @@ Edit your `base.html` file to include these files like this:
         <div class="page-header">
             <div class="row">
                 <div class="col-md-2">
-                    <img src="{{ STATIC_URL }}img/timekeeper.png" />
+                    <img src="{{ STATIC_URL }}img/timekeeper.jpg" />
                 </div>
                 <div class="col-md-10">
                     <h1>TimeKeeper</h1>
