@@ -149,9 +149,8 @@ In there you will find a few files. These contain settings that you should custo
 
 ### Install prerequisites
 
-Before we begin, you should make sure you have Tomcat and Maven installed. I find the easiest way to do this is with the `homebrew` package system on OSX, or `apt-get` on Ubuntu.
+Before we begin, you should make sure you have Maven installed. I find the easiest way to do this is with the `homebrew` package system on OSX, or `apt-get` on Ubuntu.
 
-`$> brew install tomcat`
 `$> brew install maven`
 
 ### Customize the package
@@ -177,39 +176,27 @@ For example, here is what my the beginning of my `pom.xml` file looks like:
 
 Next, look down to the `build` section and change the `finalName` tag to match what you put in the `artifactId`.
 
-Next, let's look in the `solr` directory. There are quite a few files in `solr/collection1/conf`, but we will only look at two: `solrconfig.xml` and `schema.xml`. Open up `solrconfig.xml`.
+Next, let's look in the `solr` directory. There are quite a few files in `solr/collection1/conf`, but we will only look at one right now: `schema.xml`.
 
-I have had quite a few problems in the past with the value in the `dataDir` tag. Solr tries to be smart about where it stores its data, but it may not work due to permissions problems. To prevent problems I find it easiest to specify a folder on my system that Solr can read and write to.
-
-Typically, I set the value to `/var/db/solr/` and then a sub-folder for the specific instance of solr I'm creating. So we should set the value of this to `/var/db/solr/timekeeper-solr`. You can put it where ever you like, but it should be a location that is readable and writeable by the same user that owns and runs the `tomcat` server (this varies from system to system, depending on how you have installed tomcat).
-
-Change it and close `solrconfig.xml`.
-
-We will focus most of our customization work on the `schema.xml` but initially we just need to change one line. Look for the `<schema name=...>` tag and change the name to something descriptive (I use the same value as the `artifactId,` 'timekeeper-solr').
+We will do more customization work in `schema.xml` but for right now we just need to change one line. Look for the `<schema name=...>` tag and change the name to something descriptive (I use the same value as the `artifactId,` 'timekeeper-solr').
 
 Now we will try to build our Solr instance. Change to the `solr` directory in your project folder (the one with `pom.xml` in it) and run the following command:
 
-`$> mvn package`
+    $> mvn package
 
 If this is the first time it is run, it will probably take a few minutes to download and install all the dependencies. If not, it will only take a few seconds.
 
 After this is finished you will have a new directory, 'target'. In this directory will be a number of files, but the one we are interested in is the .war file. It will be named after the value you supplied for `finalName` in `pom.xml`
 
-This `.war` file (for "Web Archive") is the built Solr web application, suitable for deployment with Tomcat. Any time we make a change in the `src` directory we will need to re-build this `.war` file by re-running `mvn package`.
+This `.war` file (for "Web Archive") is the built Solr web application, suitable for deployment with a Java application server such as Tomcat. However, this version of Solr comes with a built-in web server we can use for testing, `jetty`. You can quickly boot up your copy of Solr and start testing it by running:
 
-On my system the Tomcat `webapps` directory is at `/usr/local/Cellar/tomcat/7.0.47/libexec/webapps/`. We will either need to copy our `.war` file to this, or, even better, create a symbolic link between it so that when we re-build our Solr package it will automatically be re-deployed. To symlink it, change to your tomcat webapps directory and run:
+    $> mvn jetty:run
 
-`$> ln -s /path/to/your/project/solr/target/timekeeper-solr.war .`
+You should see lots of text fly by, and then a line like:
 
-Now let's start up Tomcat and see if it worked. On my system I start Tomcat with the following command:
+    [INFO] Started Jetty Server
 
-`$> catalina start`
-
-(Similarly you can stop Tomcat with `catalina stop`)
-
-Open a web browser and enter the URL: `http://localhost:8080/timekeeper-solr/`
-
-If all went well, you should see something like this:
+Scroll back through the console output to make sure there are no errors, and then visit your Solr instance in your web browser. If all went well, you should see something like this:
 
 ![Figure 9](figures/figure9.png)
 
