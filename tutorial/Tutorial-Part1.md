@@ -4,13 +4,13 @@ This tutorial will provide you with a comprehensive overview on how to build a R
 
  * How to create and work with Python virtual environments
  * How to create and work with the Django web application system
- * Model-View-Controller, and how it works
- * Representation State Transfer (REST) best practices
+ * Model-View-Controller
+ * Representation State Transfer (REST)
  * HTTP Headers, and Web API-based requests
  * Asynchronous JavaScript communication (AJAX)
  * How to set up and maintain a Solr installation
  * Notification centres, and Django Signals
- * Automatic indexing and searching
+ * Automatic indexing and searching with Solr and Django
 
 By the end of this tutorial you should be able to understand how all of these components may fit together to form a complete, but simple, web application.
 
