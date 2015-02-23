@@ -60,3 +60,5 @@ app_env/*
 target/*
 
 solr/target/*
+
+**/__pycache__/*
