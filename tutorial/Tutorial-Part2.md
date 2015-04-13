@@ -24,13 +24,13 @@ Views (Controllers) are what tie Models and Templates together. In Django, views
 
 In the application we will build, there are two other components that supplement the MTV (MVC) architecture. These are Serializers and Renderers. You may not have heard of them before -- these are specific to the Django REST Framework module that we installed earlier.
 
-Serializers sit between the Model and the View. A serializer determines which fields from the model will be passed along to the view, and how these fields should be represented. For example, a field that references a relationship (for example, the relationship between an Activity and a Place) can be retrieved as an array of data, representing each Place. Or, it could be retrieved as a list of URLs that point to the record of that Place. The Serializer determines how a field is represented.
+Serializers sit between the Model and the View. A serializer determines which fields from the model will be passed along to the view, and how these fields should be represented. For example, a field that references a relationship (for example, the relationship between an Activity and a Place) can be retrieved as an array of data, representing each Place. Or, it could be retrieved as a list of URLs that point to the record of that Place.
 
 Renderers sit between the View and the Template. Their job is to automatically choose which template to apply to a request. In our application we will want both humans and computers to access the same data at the same URL. If a human visits "/place/123" in their browser, they will expect to see an HTML version of the page. However, if a computer visits "/place/123" as part of an automated system, they will expect to retrieve JSON data. A Renderer is the layer that manages this process. Renderers will respond to a request for a particular content type (we will see more on this later) and deliver the appropriate rendered template (HTML or JSON) back.
 
 ## REST (REpresentational State Transfer)
 
-REST is not a technology. It is a way to organize the structure of a site as an architectural principle. While the theory behind REST is quite dense, there are three main components that we will use in our application.
+REST is not a technology. It is a way to organize the structure of a site as an architectural principle. While the theory behind REST is quite dense, there are four main components that we will use in our application.
 
 The first is that everything is a resource. To understand why this is important, consider the following URL:
 
@@ -42,15 +42,23 @@ I'm sure we have all seen examples of this type of URL. This URL uses _query par
 
 Rather than giving an ID, this request asks for a list of places to be returned, but rendered in JSON.
 
-Finally, to round out our example of a non-RESTful architecture, consider this URL:
+Finally, to round out our examples of non-RESTful URLs, consider this URL:
 
 `http://example.com/res.cgi?recordId=123&type=place&action=edit&format=html`
 
-This set of query parameters sets the system to do something quite different -- edit a place record. This type of URL is both confusing to a human, and very hard to parse for a programmer, since they need to be able to create a routing, and a controller, for every single possible combination of query parameters.
+This set of query parameters sets the system to do something quite different -- edit a place record.
+
+## Problems
+
+The problems associated with these URLs are not a question of whether or not they will *work*. Even the most inexperienced coder can read in the parameters from the URL and cause their application to react appropriately from the input.
+
+However, this is a lot of work that does not need to be done. It turns out that a lot of this behaviour is *already* defined in the HyperText Transfer Protocol (HTTP) specification. Creating a web application that performs standard Create/Read/Update/Destroy functions with a custom URL routing, permissions, and lookup functionality reinvents most of HTTP — and often very badly!
+
+Since our web applications will always run over HTTP, then, we should leverage this fact and delegate as much of our application’s behaviour to adhere to the protocol. In the long run, it will produce easier, more maintainable, and more secure code.
 
 ## Resources
 
-REST provides an alternative way of mapping URLs to actions in your application. It places the emphasis on identifying resources in your application and using logical URL construction to provide an intuitive way of identifying resources. Consider this alternative to the first URL example:
+REST places the emphasis on identifying resources in your application and using logical URL construction to provide an intuitive way of identifying resources. Consider this alternative to the first URL example:
 
 `http://example.com/place/123`
 
@@ -60,7 +68,7 @@ This provides the exact same functionality as the first example, but is more rea
 
 Where `:coll` is a particular collection and `:id` is the ID of a resource in this collection.
 
-To retrieve all records in a collection, it is logical to assume that we can follow the same pattern:
+To retrieve all records in a collection, it is reasonable to assume that we can follow the same pattern:
 
 `http://example.com/:coll/`
 
@@ -72,22 +80,26 @@ Without passing a particular ID, our system should respond by giving us all piec
 
 We would expect that these would both respond in similar ways, retrieving a list of places in our application, or one particular place. This architecture is the first component of a RESTful system.
 
-You may have noticed, however, that there are two parts missing from this. We can retrieve a place, but what if we want to edit an existing place? Or delete a place? In our previous examples there was an "&action=" query parameter that passed this in; however, this has gone missing from our RESTful examples. We will address this next.
+You may have noticed, however, that there are two parts missing from this. We can retrieve a place, but what if we want to edit an existing place? Or delete a place? In our previous examples there was an "&action=" query parameter that determined the action our application would take; however, this has gone missing from our RESTful examples. We will address this next.
 
 ## Verbs
 
-All web clients operate over the HyperText Transfer Protocol. This protocol is stateless, meaning that for each request enough information must be sent from the client to the server so that the server can fulfill the request -- no context information about a client is "stored" on the server. To send this information, a HTTP request contains several "header" fields that describe the client and the nature of the content being requested.
+All web clients operate over the HTTP. This protocol is stateless, meaning that for each request enough information must be sent from the client to the server so that the server can fulfill the request -- no context information about the state of a client is "stored" on the server. To send this information, each HTTP request contains several "header" fields that describe the client and the nature of the content being requested.
 
-One of the most important request parameters is the action that is sent with a request (which we will call "verbs"). Two of these will be familiar to you if you have done any form processing on the web, while the other two will likely not:
+One of the most important request parameters is the action that is sent with a request (which we will call “verbs”, but you may already know them as the “HTTP Methods”). Two of these will be familiar to you if you have done any form processing on the web, while the other two will likely not:
 
  * `GET`
  * `POST`
  * `PATCH` (`PUT`)
  * `DELETE`
 
-Most requests use the `GET` verb. This tells the server that the client is asking to retrieve the resource identified at a particular URL. The important thing to recognize about using `GET` is that it should *never* change the state of the resources on the server. You must never pass in commands that will alter or remove resources on the server using the GET method.
+> In the application we will build, we will use the newer `PATCH`
+> method instead of the older `PUT` method. The reasons for
+> this will be explained later in this section.
 
-So our first example can be rewritten as:
+The `GET` verb tells the server that the client is asking to retrieve the resource identified at a particular URL. The important thing to recognize about using `GET` is that it should *never* change the state of the resources on the server. You must never pass in commands that will alter or remove resources on the server using the GET method.
+
+So our first example can be rewritten to show the implicit HTTP verb:
 
 `GET http://example.com/place/123`
 
@@ -103,6 +115,11 @@ Similarly, if you wanted to delete all pieces you could send a request to the co
 
 With `PATCH` requests we must also send along the data that is used to edit the record. This is done in the "body" of the request, which we will look at later, but for now just imagine that it is like an e-mail attachment.
 
+> The difference between `PATCH` and `PUT` is that `PATCH` can 
+> perform a partial record update, returning only the changed
+> fields on a record to the server, while `PUT` must return the
+> entire modified record to the server.
+
 Finally, `POST` is used to create a record. This is typically done by sending a request to the collection level, rather than individual records:
 
 `POST http://example.com/piece/`
@@ -113,7 +130,7 @@ As you can see, `PATCH`, `DELETE`, and `POST` can delete or alter your data, whi
 
 ### Searching and Filtering
 
-One use of query parameters is for searching a collection of objects. For example:
+One use of query parameters is for limiting results within a collection of objects. For example:
 
 `http://example.com/places/?title=home`
 
@@ -123,7 +140,7 @@ might retrieve only those places that have the word "home" in the title. Multipl
 
 might retrieve all activities that took place at home at 10am.
 
-## Response types
+## Request and Response types
 
 The third component to our RESTful architecture is the response type. In our non-REST examples, we needed to pass in `&format=html` or `&format=json` to identify which format we would like to recieve our response in. However, like the Verbs, the HTTP protocol has a built-in mechanism for content negotiation, the `Accepts` header.
 
@@ -177,4 +194,20 @@ Notice here that one of the request headers is the `Accept:` header. A `*/*` ind
 
 Using the `Accept:` header we can alert a server to the content type our client is willing to accept. This is specified using mimetypes: unique identifiers that identify a certain computer format. If we supply `application/json` as the mimetype for an accept header, a properly-configured web service would serve back a JSON-encoded response. Similarly, an `Accept:` request for `text/html` would tell the server to respond with HTML. Fortunately all modern web browsers send this Accept type by default, so users browsing normally will not notice this process.
 
-Now that we know what we're building, let's go build it!
+## Status Codes
+
+The final RESTful principle we will adhere to is the use of HTTP Status Codes to communicate the state of our request and permit a client to act, or fail gracefully, on the result of a request.
+
+The most familiar HTTP Status Code is the ubiquitous “404 Not Found”, but there are many, many more status codes. They are broken into groups which broadly define the type of status they are communicating:
+
+    1XX Informational
+    2XX Success
+	  3XX Redirection
+    4XX Client Error
+    5XX Server Error
+
+So, the 404 code is actually the server saying “I understood the request, but the page you (the client) is requesting is not on this server.”
+
+Returning an appropriate status code to a request is a key element in allowing a client to gracefully handle a response. For example, if a client requests something that requires authentication, the server can respond with a “401 Unauthorized” response. Upon receiving this response, a client can then prompt the user to enter their authentication credentials, and then re-try the request. If the user is _authenticated_, but still not _authorized_ to perform the action, the server can then respond with a “403 Forbidden” response, which is like the server saying “I know who you are now, but I still can’t open the pod bay doors, Hal.” `</nerd>`
+
+Ok, enough talking. Let’s get to coding!
