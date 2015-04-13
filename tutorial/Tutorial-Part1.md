@@ -37,7 +37,7 @@ After this has been installed you should be able to run `python3` and get a prom
     Type "help", "copyright", "credits" or "license" for more information.
     >>>
 
-A quick note about Python 3: There are quite a few changes in Python 3, but by far the biggest one that will probably bite you in older code is that the `print` command has been changed from a statement (e.g., `print "Hello World"`) to a function (e.g., `print("Hello World")`).
+A quick note about Python 3: There are quite a few changes in Python 3, but by the biggest one (that will probably bite you in older code) is that the `print` command has been changed from a statement (e.g., `print "Hello World"`) to a function (e.g., `print("Hello World")`).
 
 ### Browser tools
 
@@ -67,7 +67,7 @@ Now create a virtual environment:
 
     $> virtualenv-3.4 app_env
 
-This will create a directory in your project directory called `app_env`. This directory will hold any Python modules you install. Every time you wish you use this environment you need to activate it:
+This will create a directory in your project directory called `app_env`. This directory will hold any Python modules you install. Every time you want to work on your project you will need to first activate this environment:
 
     $> source app_env/bin/activate
 
