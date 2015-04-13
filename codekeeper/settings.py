@@ -1,5 +1,5 @@
 """
-Django settings for timekeeper project.
+Django settings for codekeeper project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/1.7/topics/settings/
@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '4@-p$1dzb3t2*g-4c(c$k%5@$xag64hoiy585!(h$6(skr4_7c'
+SECRET_KEY = '$++b1bfr1itnm)b+s#c_799lo21ptgfu9339qn1l5osll(!!fd'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -36,7 +36,8 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'timekeeper',
+    'codekeeper',
+    'rest_framework',
     'django_extensions'
 )
 
@@ -50,9 +51,9 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'timekeeper3.urls'
+ROOT_URLCONF = 'codekeeper.urls'
 
-WSGI_APPLICATION = 'timekeeper3.wsgi.application'
+WSGI_APPLICATION = 'codekeeper.wsgi.application'
 
 
 # Database
@@ -61,7 +62,7 @@ WSGI_APPLICATION = 'timekeeper3.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'codekeeper.sqlite3'),
     }
 }
 

@@ -1,435 +1,180 @@
-# Extended Serializers
+# System architecture
 
-It's time we took a closer look at serializers.
+Now that we have Django set up, let's step back for a minute and consider the web application we want to build. For the purposes of this example, we want to build a web application that keeps track of a person's time spent doing a particular activity. We will start by identifying the principle functional requirements of this web application.
 
-Let's imagine that I would like to display the title of the place for each activity. Currently, the only data the serializer is giving me is a URL to retrieve the place record -- not the actual data itself.
+To start, we should identify the different data types that we want to track. To keep this example simple, we will track just three data types: Activities, Places, and People. An Activity (like exercising, or talking on the phone) can occur in many Places (gym, living room), and with different People (a friend, a colleague). These data types will form the core functionality of our application.
 
-Here is a cURL request and a JSON response of an activity to illustrate:
+Next, we know that we would like this web application to serve data for both humans and computers to consume. That is, we want to create both a website and a web service API to allow our data to be used by other systems. Fortunately, the Django REST Framework (which we have already installed) takes a lot of the work out of constructing such a site. By the end of this tutorial we will have a system where you can query the same URL and, depending on the "content type" that is requested, be returned either HTML (for web browsers) or JSON (for computer consumption).
 
-```
-$> curl -XGET -H "Accept: application/json" http://localhost:8000/activity/1/
+Finally, we will want to add a Solr search engine to this application, to allow us to search and retrieve items in our database quickly. In the real world, a system of this scale will not need Solr, but we will construct one anyway as an example.
 
-{
-    "url": "http://localhost:8000/activity/1/",
-    "title": "Jogging",
-    "start_time": "2014-04-26T18:10:08Z",
-    "end_time": "2014-04-26T18:10:11Z",
-    "place": "http://localhost:8000/place/1/",
-    "partner": "http://localhost:8000/person/1/",
-    "created": "2014-04-26T18:10:55.376Z",
-    "updated": "2014-04-26T18:10:55.376Z"
-}
-```
+## Model-View-Controller (or Model-Template-View in Django)
 
-To get the place name, we can embed a place serializer within our activity serializer. Open up `serializers/activity.py` and create a new serializer for your place data. Your file should look like this:
+Django uses the Model-View-Controller (MVC) paradigm, but it is important to note that it renames the concepts to Model-Template-View (MTV). Despite the change in name, the way they work is the same. (I will use the Django version of the names, just so you don't get confused, but I will include the "traditional" name for them in parentheses).
 
-```
-from timekeeper.models.activity import Activity
-from timekeeper.models.place import Place
-from rest_framework import serializers
+A Model (Model) allows you to model the data that we have in the system. These can be thought of as the structure of your database, and the way you would store your data in that database. For example, one of our data types that we have identified is a "Place". Accordingly, we will create a "Place" model to store information about Places (location, name).
 
-class PlaceActivitySerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Place
+A Template (View) allows you to display the data to a user in a way that makes sense. A template for all Places might have a table listing all the places you keep track of, while a template for a specific place may display extensive information about that place, including all the activities that you have done there. Templates are the "look and feel" portion of your website, and control how users interact with the data on your site.
 
-class ActivitySerializer(serializers.HyperlinkedModelSerializer):
-    place = PlaceActivitySerializer()
+Views (Controllers) are what tie Models and Templates together. In Django, views respond to requests from users and retrieve data from the models, and then apply the templates to these requests. Views are mapped in the `urls.py` file, where you establish patterns (via regular expressions) that determine which view should respond to which request. If a user asks for '/place/123', this is mapped to the view that manages places, and the ID (123) is passed along as the particular place to render in your view.
 
-    class Meta:
-        model = Activity
-```
+![Figure 2 (From Apple's developer documentation)](figures/figure2.gif)
 
-Now the request for the same activity results in this:
+## MVC Extended in the Django REST Framework
 
-```
-{
-    place: {
-        url: "http://localhost:8000/place/1/",
-        name: "Gym",
-        latitude: null,
-        longitude: null,
-        created: "2014-04-26T18:10:22.523Z",
-        updated: "2014-04-26T18:10:22.523Z"
-    },
-    url: "http://localhost:8000/activity/1/",
-    title: "Jogging",
-    start_time: "2014-04-26T18:10:08Z",
-    end_time: "2014-04-26T18:10:11Z",
-    partner: "http://localhost:8000/person/1/",
-    created: "2014-04-26T18:10:55.376Z",
-    updated: "2014-04-26T18:10:55.376Z"
-}
-```
+In the application we will build, there are two other components that supplement the MTV (MVC) architecture. These are Serializers and Renderers. You may not have heard of them before -- these are specific to the Django REST Framework module that we installed earlier.
 
-We can now access the title of our place through the `place` field. Open your `templates/activity/activity_list.html` and add a column for the place.
+Serializers sit between the Model and the View. A serializer determines which fields from the model will be passed along to the view, and how these fields should be represented. For example, a field that references a relationship (for example, the relationship between an Activity and a Place) can be retrieved as an array of data, representing each Place. Or, it could be retrieved as a list of URLs that point to the record of that Place. The Serializer determines how a field is represented.
 
-```
-{% extends "base.html" %}
+Renderers sit between the View and the Template. Their job is to automatically choose which template to apply to a request. In our application we will want both humans and computers to access the same data at the same URL. If a human visits "/place/123" in their browser, they will expect to see an HTML version of the page. However, if a computer visits "/place/123" as part of an automated system, they will expect to retrieve JSON data. A Renderer is the layer that manages this process. Renderers will respond to a request for a particular content type (we will see more on this later) and deliver the appropriate rendered template (HTML or JSON) back.
 
-{% block body %}
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Activity</th>
-                <th>Place</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for activity in content %}
-            <tr>
-                <td><a href="{{ activity.url }}">{{ activity.title }}</a></td>
-                <td>{{ activity.place.name }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% endblock %}
-```
+## REST (REpresentational State Transfer)
 
-## Computed Fields
+REST is not a technology. It is a way to organize the structure of a site as an architectural principle. While the theory behind REST is quite dense, there are three main components that we will use in our application.
 
-In our models we can define methods that can be used to process and extract information stored in that model. We have already seen a very simple example of this with the `__unicode__` method on the Person model:
+The first is that everything is a resource. To understand why this is important, consider the following URL:
 
-```
-class Person(models.Model):
-    ...
-    def __unicode__(self):
-        return u"{0}, {1}".format(self.last_name, self.first_name)
-```
+`http://example.com/res.cgi?recordId=123&type=place&action=retrieve&format=html`
 
-In other words, a computed field is a model method that acts like a field. To illustrate, let's make computed field that can display the person's name as "Firstname Lastname":
+I'm sure we have all seen examples of this type of URL. This URL uses _query parameters_ to pass in actions that are executed by the server. Consider a second example:
 
-```
-@property
-def full_name(self):
-    return u"{0} {1}".format(self.first_name, self.last_name)
-```
+`http://example.com/res.cgi?type=place&action=list&format=json`
 
-We can now use this in our serializer to deliver the person's full name in "natural" order:
+Rather than giving an ID, this request asks for a list of places to be returned, but rendered in JSON.
 
-Change your `serializers/person.py` to the following:
+Finally, to round out our example of a non-RESTful architecture, consider this URL:
 
-```
-from timekeeper.models.person import Person
-from rest_framework import serializers
+`http://example.com/res.cgi?recordId=123&type=place&action=edit&format=html`
 
-class PersonSerializer(serializers.HyperlinkedModelSerializer):
-    full_name = serializers.Field(source="full_name")
+This set of query parameters sets the system to do something quite different -- edit a place record. This type of URL is both confusing to a human, and very hard to parse for a programmer, since they need to be able to create a routing, and a controller, for every single possible combination of query parameters.
 
-    class Meta:
-        model = Person
-```
+## Resources
 
-Now we have a new field in our output, `full_name` which we can use to display a more natural, human-friendly version of the person's name.
+REST provides an alternative way of mapping URLs to actions in your application. It places the emphasis on identifying resources in your application and using logical URL construction to provide an intuitive way of identifying resources. Consider this alternative to the first URL example:
 
-```
-$> curl -XGET -H "Accept: application/json" http://localhost:8000/person/1/
+`http://example.com/place/123`
 
-{
-    "full_name": "Kris Kringle",
-    "url": "http://localhost:8000/person/1/",
-    "first_name": "Kris",
-    "last_name": "Kringle",
-    "created": "2014-04-26T18:10:41.077Z",
-    "updated": "2014-04-26T18:10:41.077Z"
-}
-```
+This provides the exact same functionality as the first example, but is more readable and more logical. It follows a pattern:
 
-For now, we'll leave our Django web application alone and shift to looking at Solr.
+`http://example.com/:coll/:id`
 
-# Solr
+Where `:coll` is a particular collection and `:id` is the ID of a resource in this collection.
 
-Solr is a search engine designed for fast retrieval of records. It also provides handy tools for creating faceted searching. We will be setting up Solr to use as a search engine in our TimeKeeper project.
+To retrieve all records in a collection, it is logical to assume that we can follow the same pattern:
 
-## Getting Started
+`http://example.com/:coll/`
 
-If you haven't already, you should clone the code from `https://github.com/DDMAL/solr-mvn-template` and place it in your web application folder (you should rename it to something like "solr." This will serve as a template for getting you up and running with Solr.
+Without passing a particular ID, our system should respond by giving us all pieces. Similarly:
 
-In there you will find a few files. These contain settings that you should customize for your own application. After changing these files you will build an instance of a Solr search system using `maven`, a build tool for Java applications, and running it through `Tomcat,` a Java web application server. We'll cover this next.
+`http://example.com/places/`
 
-### Install prerequisites
+`http://example.com/place/123`
 
-Before we begin, you should make sure you have Maven installed. I find the easiest way to do this is with the `homebrew` package system on OSX, or `apt-get` on Ubuntu.
+We would expect that these would both respond in similar ways, retrieving a list of places in our application, or one particular place. This architecture is the first component of a RESTful system.
 
-`$> brew install maven`
+You may have noticed, however, that there are two parts missing from this. We can retrieve a place, but what if we want to edit an existing place? Or delete a place? In our previous examples there was an "&action=" query parameter that passed this in; however, this has gone missing from our RESTful examples. We will address this next.
 
-### Customize the package
+## Verbs
 
-The `pom.xml` file contains the build instructions for building a Solr instance with Maven. You should make sure you customize it to your specific project. Open it up and change the values for the following tags at the top to match your application.
+All web clients operate over the HyperText Transfer Protocol. This protocol is stateless, meaning that for each request enough information must be sent from the client to the server so that the server can fulfill the request -- no context information about a client is "stored" on the server. To send this information, a HTTP request contains several "header" fields that describe the client and the nature of the content being requested.
 
- * groupId
- * artifactId
- * name
- * url
+One of the most important request parameters is the action that is sent with a request (which we will call "verbs"). Two of these will be familiar to you if you have done any form processing on the web, while the other two will likely not:
 
-For example, here is what my the beginning of my `pom.xml` file looks like:
+ * `GET`
+ * `POST`
+ * `PATCH` (`PUT`)
+ * `DELETE`
+
+Most requests use the `GET` verb. This tells the server that the client is asking to retrieve the resource identified at a particular URL. The important thing to recognize about using `GET` is that it should *never* change the state of the resources on the server. You must never pass in commands that will alter or remove resources on the server using the GET method.
+
+So our first example can be rewritten as:
+
+`GET http://example.com/place/123`
+
+We will skip `POST` for a moment and discuss `PATCH` and `DELETE`. These are used to send commands for editing ("PATCHing") a record, and deleting a record. This is applied rather intuitively:
+
+`PATCH http://example.com/place/123`
+
+`DELETE http://example.com/place/123`
+
+Similarly, if you wanted to delete all pieces you could send a request to the collection level:
+
+`DELETE http://example.com/place/`
+
+With `PATCH` requests we must also send along the data that is used to edit the record. This is done in the "body" of the request, which we will look at later, but for now just imagine that it is like an e-mail attachment.
+
+Finally, `POST` is used to create a record. This is typically done by sending a request to the collection level, rather than individual records:
+
+`POST http://example.com/piece/`
+
+Like `PATCH`, the data used to create the record with a POST request is sent along in the body of the request.
+
+As you can see, `PATCH`, `DELETE`, and `POST` can delete or alter your data, while `GET` requests, beyond allowing people to see a record, cannot change the state of the server. If you design a system such that no data on the server can be altered with a `GET` request, and that `PATCH`, `DELETE`, and `POST` requests are only allowed by authorized users, it is easier to guard against unauthorized access to your application.
+
+### Searching and Filtering
+
+One use of query parameters is for searching a collection of objects. For example:
+
+`http://example.com/places/?title=home`
+
+might retrieve only those places that have the word "home" in the title. Multiple facets could be combined to further restrict this:
+
+`http://example.com/activities/?place=home&time=10:00`
+
+might retrieve all activities that took place at home at 10am.
+
+## Response types
+
+The third component to our RESTful architecture is the response type. In our non-REST examples, we needed to pass in `&format=html` or `&format=json` to identify which format we would like to recieve our response in. However, like the Verbs, the HTTP protocol has a built-in mechanism for content negotiation, the `Accepts` header.
+
+To understand and view request headers, we will use the cURL tool. This is a powerful command-line utility that allows us to query a URL and receive a response in our terminal. This will become an important part of our toolbox as we build our API, so let's see how it works. I will pass in a simple command to retrieve the Google homepage using the GET method:
+
+`curl -XGET -L http://google.com`
+
+The `-L` parameter tells curl to follow any automated redirects. If this is successful, you will see a dump of the Google homepage in raw HTML printed to your console.
+
+Let's look at it a bit more in-depth. Add the "-v" flag to curl and try again. We'll use the McGill homepage, since it's a little easier to parse than the Google request:
+
+`curl -XGET -L -v http://www.mcgill.ca`
+
+What we receive in response looks like this:
 
 ```
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>ca.mcgill.music.ddmal.timekeeper</groupId>
-    <artifactId>timekeeper-solr</artifactId>
-    <packaging>war</packaging>
-    <version>1.0-SNAPSHOT</version>
-    <name>TimeKeeper Solr</name>
-    <url>http://ddmal.music.mcgill.ca</url>
+~|⇒ curl -XGET -v http://www.mcgill.ca
+* Adding handle: conn: 0x7fa6ca804000
+* Adding handle: send: 0
+* Adding handle: recv: 0
+* Curl_addHandleToPipeline: length: 1
+* - Conn 0 (0x7fa6ca804000) send_pipe: 1, recv_pipe: 0
+* About to connect() to www.mcgill.ca port 80 (#0)
+*   Trying 132.216.177.160...
+* Connected to www.mcgill.ca (132.216.177.160) port 80 (#0)
+> GET / HTTP/1.1
+> User-Agent: curl/7.30.0
+> Host: www.mcgill.ca
+> Accept: */*
+>
+< HTTP/1.1 200 OK
+< Date: Thu, 30 Feb 2015 17:13:16 GMT
+* Server Apache/2.2.0 (Fedora) is not blacklisted
+< Server: Apache/2.2.0 (Fedora)
+< X-Powered-By: PHP/5.3.3
+< Set-Cookie: SESSdbe2636110680a18092a41d7f7cf0fc3=f3nko19tvok7cpafsp38tufm01; path=/; domain=.mcgill.ca
+< Last-Modified: Thu, 30 Feb 2015 17:13:16 GMT
+< ETag: "eb7507bbe1e6a1e28f9dcaa840c82cbc"
+< Expires: Sun, 19 Nov 1978 05:00:00 GMT
+< Cache-Control: must-revalidate
+< X-Cnection: close
+< Transfer-Encoding: chunked
+< Content-Type: text/html; charset=utf-8
+< Set-Cookie: BIGipServer~CCS_Sties~DRUPAL=867293316.20480.0000; path=/
+<
 ```
 
-Next, look down to the `build` section and change the `finalName` tag to match what you put in the `artifactId`.
+Lines marked with an ">" indicate a *request* header; lines marked with a "<" indicate a *response* header. The request header tells the server a bit about the client we're using -- in this case, it's curl (`User-Agent: curl/7.30.0`). The server responds with a bit about what's being used to send it back (`Server: Apache/2.2.0 (Fedora)`) and then some other information about the nature of the content being sent.
 
-Next, let's look in the `solr` directory. There are quite a few files in `solr/collection1/conf`, but we will only look at one right now: `schema.xml`.
+Notice here that one of the request headers is the `Accept:` header. A `*/*` indicates that our client will accept all types of responses. The corresponding response header is the `Content-Type:` header, which tells our client that the server is responding with a content type of `text/html; charset=utf-8`.
 
-We will do more customization work in `schema.xml` but for right now we just need to change one line. Look for the `<schema name=...>` tag and change the name to something descriptive (I use the same value as the `artifactId,` 'timekeeper-solr').
+Using the `Accept:` header we can alert a server to the content type our client is willing to accept. This is specified using mimetypes: unique identifiers that identify a certain computer format. If we supply `application/json` as the mimetype for an accept header, a properly-configured web service would serve back a JSON-encoded response. Similarly, an `Accept:` request for `text/html` would tell the server to respond with HTML. Fortunately all modern web browsers send this Accept type by default, so users browsing normally will not notice this process.
 
-Now we will try to build our Solr instance. Change to the `solr` directory in your project folder (the one with `pom.xml` in it) and run the following command:
-
-    $> mvn package
-
-If this is the first time it is run, it will probably take a few minutes to download and install all the dependencies. If not, it will only take a few seconds.
-
-After this is finished you will have a new directory, 'target'. In this directory will be a number of files, but the one we are interested in is the .war file. It will be named after the value you supplied for `finalName` in `pom.xml`
-
-This `.war` file (for "Web Archive") is the built Solr web application, suitable for deployment with a Java application server such as Tomcat. However, this version of Solr comes with a built-in web server we can use for testing, `jetty`. You can quickly boot up your copy of Solr and start testing it by running:
-
-    $> mvn jetty:run
-
-You should see lots of text fly by, and then a line like:
-
-    [INFO] Started Jetty Server
-
-Scroll back through the console output to make sure there are no errors, and then visit your Solr instance in your web browser. If all went well, you should see something like this:
-
-![Figure 9](figures/figure9.png)
-
-We're now ready to go!
-
-## Understanding the Solr schema file
-
-Open up `schema.xml` and find the `<fields>` section (This should be towards the end of the file). This section defines the fields that are present in Solr, and determine the data that we want to index.
-
-There are several field types. All field types present in your schema must be defined above. It is possible to define new, custom fields that (for example) deal with non-English searching rules.
-
-In general there are three different field definitions possible. The first is a regular `field`. A field defined like this might look like:
-
-`<field name="type" type="string" indexed="true" stored="true" required="true" multiValued="false" />`
-
-In this example, we have a field named "type", with a content type of "string". This field will be both indexed (for searching) and stored (so we can retrieve it later). These last two parameters can be handy for optimizing a search engine. For example, we can index a field, but not store it. This means that we can use it in queries, but we don't necessarily want to be able to retrieve it. The opposite, storing but not indexing, means we can store data in a Solr record but not make it available for searching.
-
-The second field definition is a `dynamicField`. Its definition looks like this:
-
-`<dynamicField name="*_s" type="string" indexed="true" stored="true"/>`
-
-This looks like the regular field definition, but notice that instead of a regular field name it has a wildcard ('*') as part of the name. This means that this field will accept any fields with a name that matches the prefix, e.g., we can create a dynamic field called "first_name_s". 
-
-Finally, the last field definition is the `copyField`. This is not a field, but rather a way of re-purposing existing fields to process them in a different manner. Consider the following definitions:
-
-`<field name="title" type="string" indexed="true" stored="true" />`
-`<field name="tg_title" type="text_general" indexed="true" />`
-`<field name="tg_fr_title" type="text_fr" indexed="true" />`
-
-In the first definition we define a field for the title that stores a book title as a "string" type. This is useful for when we want to display the book title, but not very useful if we want to do full-text search of the fields and do all the things we expect full-text searching to do -- namely, understand that words can have different endings (for plurals). This is called "stemming".
-
-In the second definition we define a "text_general" field that provides these sorts of full-text searching tools. Note that while we index it, we are not storing it for retrieval later.
-
-However, our 'text_general' field is defined using English grammar rules! This means that it assumes the text in the field is English, and applies the stemming rules accordingly. However, we know that the book titles we are indexing are in French, so we need another field to index this properly.
-
-The last definition uses a "text_fr" field definition that applies proper French grammar and language rules. You can look above in your `schema.xml` file to find the exact definition of this field:
-
-```
-    <!-- French -->
-    <fieldType name="text_fr" class="solr.TextField" positionIncrementGap="100">
-      <analyzer> 
-        <tokenizer class="solr.StandardTokenizerFactory"/>
-        <!-- removes l', etc -->
-        <filter class="solr.ElisionFilterFactory" ignoreCase="true" articles="lang/contractions_fr.txt"/>
-        <filter class="solr.LowerCaseFilterFactory"/>
-        <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/stopwords_fr.txt" format="snowball" enablePositionIncrements="true"/>
-        <filter class="solr.FrenchLightStemFilterFactory"/>
-        <!-- less aggressive: <filter class="solr.FrenchMinimalStemFilterFactory"/> -->
-        <!-- more aggressive: <filter class="solr.SnowballPorterFilterFactory" language="French"/> -->
-      </analyzer>
-    </fieldType>
-```
-
-When we import our documents into Solr, we would need to load the Book title into these three fields separately. This is where `copyField` comes in handy. We can define two `copyField` directives in our `fields` section:
-
-`<copyField source="title" dest="tg_title"/>`
-`<copyField source="title" dest="tg_fr_title"/>`
-
-The `copyField` takes a single field and copies the contents to another field so that other indexing rules may be applied to it.
-
-Field types will store, and work, with specific types of data. For example, the "string" type will store a literal string, which makes it a useful field for faceted searches (where all records are grouped according to a string). Number fields, like "int" or "float" allows for sorting and arithmetic, while "date" fields allow for date-range searching ("Fetch records between date A and date B"). As mentioned earlier, "text" fields provide extra functionality for performing full-text searches.
-
-## Writing a Solr Schema
-
-So, now we have a Django database with our data stored, and a Solr instance waiting to index our data. So let's build a schema with fields to store our data.
-
-Each document in Solr must have an unique identifier. Since we will (potentially) be loading many records in, the easiest way I have found to ensure that each record has a unique identifier is to use a Universially Unique ID (UUID). Fortunately it's very easy to generate UUIDs in Python. So, our first field will be 'id':
-
-`<field name="id" type="string" indexed="true" stored="true" required="true" />`
-
-While we have three Models in Django, we can't differentiate between records that easily in Solr. So we will define a field called "type" that contains one of three values that will identify our content types: "goudimel_book", "goudimel_piece" or "goudimel_phrase". Our next field will be "type".
-
-`<field name="type" type="string" indexed="true" stored="true" />`
-
-These two fields will be part of every record, no matter what other fields we choose to store in each document.
-
-At this point you should add fields for every piece of data you wish to store from your Django models. As an example, here is what I have:
-
-```
-<field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
-<field name="type" type="string" indexed="true" stored="true" required="true" multiValued="false" />
-<field name="title" type="text_general" indexed="true" stored="true" />
-<field name="name" type="string" indexed="true" stored="true" />
-<field name="item_id" type="string" indexed="true" stored="true" />
-<field name="start_time" type="date" indexed="true" stored="true"/>
-<field name="end_time" type="date" indexed="true" stored="true"/>
-<field name="first_name" type="string" indexed="true" stored="true" />
-<field name="last_name" type="string" indexed="true" stored="true" />
-<field name="created" type="date" indexed="true" stored="true"/>
-<field name="updated" type="date" indexed="true" stored="true"/>
-```
-
-You may notice that we are not indexing the latitude/longitude fields on the Place model. This can be handled by the existing dynamicField definitions:
-
-```
-<!-- Type used to index the lat and lon components for the "location" FieldType -->
-<dynamicField name="*_coordinate"  type="tdouble" indexed="true"  stored="true" />
-<dynamicField name="*_p"  type="location" indexed="true" stored="true"/>
-```
-
-You may wish to clean up your `schema.xml` file at this point, commenting out or deleting un-used fields. Re-build your Solr instance and check to make sure it is working in Tomcat.
-
-## Automatically Indexing Content
-
-Now that we have a search engine up and running, we need to start adding content to it, making our data available for searching. We will be building a system to automatically index content whenever a record is created, modified, or deleted from our Django database. To do this we will make use of Django's "Signals" feature to automatically trigger indexing and updating Solr when a database record is modified.
-
-### Signals
-
-Django signals are an implementation of the 'notification' design pattern. This design pattern is event-driven, and can trigger multiple actions when a single message, or signal, is sent based on an action (e.g., a record is created).
-
-When a Django model instance is saved, either when it is created or when it is edited, it will send a notification out. This notification is picked up by any methods that are registered to receive this notification.
-
-This is useful when we want to trigger many actions (like indexing in Solr) when a record is saved, but we don't want to override the default `save()` behaviour method on that model.
-
-### SolrPy
-
-SolrPy is the Python module we will be using to get Django to talk to Solr. There are other, more complex modules but I find they obscure a lot of the work that Solr does in a way that makes it difficult to understand how to build a custom search system.
-
-The first thing we need to do is create a setting in our Django application where we can store the address of our Solr server. Open up `settings.py` and add the following line:
-
-`SOLR_SERVER = "http://localhost:8080/timekeeper-solr/"`
-
-We will use this setting when we need to work with Solr in our indexing and querying methods.
-
-### Indexing Content
-
-Open up your `Activity` model file (`models/activity.py`). To start using Signals we will need to import some new methods at the top.
-
-Import the following:
-
-```
-from django.dispatch import receiver
-from django.db.models.signals import post_save
-```
-
-Now create a new function in this file. It should be its own function, and not part of the `Activity` model.
-
-```
-@receiver(post_save, sender=Activity)
-def solr_index(sender, instance, created, **kwargs):
-    import uuid
-    from django.conf import settings
-    import solr
-
-    solrconn = solr.SolrConnection(settings.SOLR_SERVER)
-    record = solrconn.query("type:timekeeper_activity item_id:{0}".format(instance.id), q_op="AND")
-    if record:
-        solrconn.delete(record.results[0]['id'])
-
-    activity = instance
-    d = {
-        'type': 'timekeeper_activity',
-        'id': str(uuid.uuid4()),
-        'item_id': activity.id,
-        'title': activity.title,
-        'start_time': activity.start_time,
-        'end_time': activity.end_time,
-        'created': activity.created,
-        'updated': activity.updated
-    }
-    solrconn.add(**d)
-    solrconn.commit()
-```
-
-Let's look at this method a bit more in-depth. The first line of this function is called a Python "decorator". Decorators are handy to know about, but for now it's enough to know that this function is what "registers" the following function for notifications. Notice that the `@receiver` takes two arguments: the notification it will listen for ([post_save](https://docs.djangoproject.com/en/dev/ref/signals/#post-save)), and the specific model that it listens for notifications from (`Activity`).
-
-This means that after an Activity record has been saved, this `solr_index` function will be called.
-
-The `solr_index` function takes a number of parameters. The first is a reference to the sender, in this case the Activity model. The second is a reference to the specific `instance,` or record that was saved. The other arguments are optional and can be ignored for the moment.
-
-The import lines are fairly self-explanatory. Notice that we are importing the `uuid` module to create universally unique IDs for our records.
-
-`solrconn` is the call that establishes a connection to our Solr server. We can use the setting from our `settings.py` that we created earlier.
-
-The next few lines will look for an existing record in our Solr system. If we are creating a new record, chances are it will not exist. However, if we are updating an older record the easiest way to deal with it is to delete the old record and then re-add a new one. By default, Solr uses an "OR" operator, so we must explicitly specify the "AND" query operator (`q_op`) for this operation.
-
-Finally, we index the content. We create a key/value dictionary that contains the Solr field that we want to push content into, and the content from our activity instance that is being saved as the value. Notice that the keys in our dictionary match the fields that we established in our Solr schema.
-
-This is concluded by calling `add` to our Solr server to add the document to the Solr server. It uses a Python idiom that you may not be familiar with:
-
-`solrconn.add(**d)`
-
-What this call does is expands the keys and values from our dictionary into arguments for the function call. So:
-
-`d = {'title': "Jogging", "start_time": "2014-04-27T18:04:02Z"}`
-
-becomes:
-
-`solrconn.add(title="Jogging", start_time="2014-04-27T18:04:02Z")`
-
-I find it a very handy thing to use.
-
-Now that our indexing script is in place, let's test it out. Open a web browser and navigate to the Django admin interface. Add a new activity.
-
-Once you have added it, navigate to your Solr admin interface. Select "collection1" from the drop-down on the left, and then choose the "Query" option. You can leave everything the way it is, and click the "Execute Query" button.
-
-You should see something like this:
-
-![Figure 10](figures/figure10.png)
-
-Success! To get your previously-added activities into Solr you just need to go in and re-save them without changing anything. They will be automatically indexed as you save.
-
-Proceed to do the same thing for your other two models. Remember that you *will* need to change the `type` field to match the record type. I use the pattern "appname_model", so "timekeeper_activity", "timekeeper_person", etc.
-
-### Deleting content
-
-When a record is created or modified, the `post_save` handler will automatically update the Solr record. However, if you should delete a record you will probably want to completely remove it from your Solr index. We will use another Django signal ([post_delete](https://docs.djangoproject.com/en/dev/ref/signals/#post-delete)) for this:
-
-```
-@receiver(post_delete, sender=Activity)
-def solr_delete(sender, instance, **kwargs):
-    from django.conf import settings
-    import solr
-    solrconn = solr.SolrConnection(settings.SOLR_SERVER)
-    record = solrconn.query("type:timekeeper_activity item_id:{0}".format(instance.id), q_op="AND")
-    solrconn.delete(record.results[0]['id'])
-    solrconn.commit()
-```
-
-Be sure to import the `post_delete` signal at the top:
-
-`from django.db.models.signals import post_save, post_delete`
-
-Again, do this for every one of your models, changing the field names where appropriate.
-
-# Wrapping up
-
-This part of the tutorial covered the following topics:
-
- * Serializers, and customized output
- * Modifiying our templates to display information from related models
- * Getting, building, and configuring Solr
- * Customizing the Solr schema for our application
- * Automatically indexing and deleting records from our application in Solr.
-
-The next part of this tutorial will cover searching and retrieiving records from Solr, and tying them into our web interface.
+Now that we know what we're building, let's go build it!
