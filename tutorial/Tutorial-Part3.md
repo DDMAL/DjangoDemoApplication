@@ -4,9 +4,11 @@
 
 You typically start development by writing the database models. These will identify and store the data that we will use to populate our website with content.
 
-Start by creating three files in your `models` directory, one for each model we will write: `snippet.py`, `tag.py`, and `person.py`. You should always use the singular form for naming models.
+Start by creating three files in your `models` directory, one for each model we will write: `snippet.py`, `tag.py`, and `person.py`. **You should always use the singular form for naming models**.
 
 Let's start with the Snippet model. In `snippet.py` add the following code. Make sure you read it and understand what's going on before copying and pasting.
+
+`models/snippet.py`:
 
     from django.db import models
 
@@ -35,7 +37,7 @@ The `__str__` method determines what field Django uses to describe each model in
 
 We will do the same thing for Tag and Person now.
 
-person.py:
+`models/person.py:`
 
     from django.db import models
 
@@ -53,7 +55,7 @@ person.py:
         def __str__(self):
             return "{0}, {1}".format(self.last_name, self.first_name)
 
-tag.py:
+`models/tag.py`:
 
     from django.db import models
 
@@ -69,7 +71,7 @@ tag.py:
         def __str__(self):
             return "{0}".format(self.name)
 
-Notice that we are using Foreign Key fields to relate each instance to another model. In the `Snippet` model we point to the Person and Tag objects that store data about that particular person and a reference to a list of tags.
+Notice that we are using Foreign Key fields to relate each instance to another model. In the `Snippet` model we point to the `Person` and `Tag` objects that store data about that particular person and a reference to a list of tags.
 
 One last thing we need to do is to add a reference to each of these in the `__init__.py` file in our `models` directory. Open up this file and add:
 
@@ -79,13 +81,13 @@ from codekeeper.models.person import Person
 from codekeeper.models.tag import Tag
 ```
 
-This allows Django to pick up on these models in the database synchronization system.
+This important step allows Django to pick up on these models in the database synchronization system.
 
 ## Serializers
 
-We will need at least one serializer for every model we create. In the `serializers` folder you created earlier, create three new files named the same as the models: `activity.py`, `person.py` and `place.py`. These will be pretty simple to start with.
+We will need at least one serializer for every model we create. In the `serializers` folder you created earlier, create three new files named the same as the models: `snippet.py`, `person.py` and `tag.py`. These will be pretty simple to start with.
 
-`snippet.py`
+`serializers/snippet.py`
 
     from rest_framework import serializers
     from codekeeper.models.snippet import Snippet
@@ -95,7 +97,7 @@ We will need at least one serializer for every model we create. In the `serializ
         class Meta:
             model = Snippet
 
-`person.py`
+`serializers/person.py`
 
     from rest_framework import serializers
     from codekeeper.models.person import Person
@@ -105,7 +107,7 @@ We will need at least one serializer for every model we create. In the `serializ
         class Meta:
             model = Person
 
-`tag.py`
+`serializers/tag.py`
 
     from rest_framework import serializers
     from codekeeper.models.tag import Tag
@@ -119,15 +121,24 @@ We will need at least one serializer for every model we create. In the `serializ
 
 Next, let's create a couple basic views so that we can work with our system. In your `views` folder create a file, home.py.
 
-    from django.views.generic import TemplateView
+`views/home.py`:
+
+    from rest_framework import views
+		from rest_framework import renderers
+		from rest_framework.response import Response
+		from rest_framework.reverse import reverse
+		from codekeeper.renderers.custom_html_renderer import CustomHTMLRenderer
 
 
-    class HomePageView(TemplateView):
-        template_name = "index.html"
+		class HomePageView(views.APIView):
+    			template_name = “index.html”
+		    renderer_classes = (CustomHTMLRenderer,
+                        renderers.JSONRenderer,
+                        renderers.BrowsableAPIRenderer)
 
-        def get_context_data(self, **kwargs):
-            context = super(HomePageView, self).get_context_data(**kwargs)
-            return context
+    			def get(self, request, *args, **kwargs):
+        			response = Response()
+    			    return response
 
 
 This sets up our homepage view, which we will eventually hook up in our `urls.py`.
@@ -179,16 +190,14 @@ This will be a temporary front page for our website.
 
 Now, let's connect the view we created and map it to a URL we can visit in a web browser. Open up the `urls.py` file and change it to this:
 
+`urls.py`:
+
     from django.conf.urls import patterns, include, url
     from django.contrib import admin
 
     from codekeeper.views.home import HomePageView
 
     urlpatterns = patterns('',
-        # Examples:
-        # url(r'^$', 'codekeeper.views.home', name='home'),
-        # url(r'^blog/', include('blog.urls')),
-
         url(r'^$', HomePageView.as_view(), name="home"),
         url(r'^admin/', include(admin.site.urls)),
     )
@@ -197,7 +206,7 @@ Note in particular the two lines that reference our view: The first when we impo
 
 # Running our application
 
-## Set the database
+## Configure and Initialize the database
 
 Django has a number of convenient functions for managing databases and keeping it in sync with the code we write. Our "models" that we write will be automatically turned into database tables used for storing the data, and match the structure of the fields we describe in our models.
 
@@ -216,9 +225,9 @@ Open your `settings.py` file and look for the `DATABASES` section. Change it to 
 
 This will create a file, `codekeeper.sqlite3` in our project directory.
 
-## Migrations
+## Database Migrations
 
-A migration is a method of updating a database without needing to wipe and re-create a database from scratch if we change our models. Remember that our models are directly tied to the database structure, so if we edit our models—for example, adding or removing a field—we must also make sure the data contained in the database reflects these edits.
+A migration is a method of updating a database without needing to wipe and re-create a database from scratch if we change our models. Remember that our models are directly tied to the database structure, so if we edit the code for our models—for example, adding or removing a field—we must also make sure the data contained in the database reflects these edits.
 
 Without migrations, updating our website with existing data is an awkward and error-prone process. If we wanted to make a change to our models in a production website we would need to dump the data, re-structure it according to a new structure, and then re-import it into the new database structure. This is a lot of work, and can lead to loss of data if you're not careful.
 
@@ -240,7 +249,7 @@ Synchronizing the database converts the Python models to actual database tables 
 
     $> python manage.py syncdb
 
-If this is the first time you run it, it will ask you to create a new superuser. You should do so using an easy username and password (you will have to enter it a lot!). (I typically use something like "foo".)
+If this is the first time you run it, it will ask you to create a new superuser. For development, you should do so using an easy username and password (you will have to enter it a lot!). (I typically use something like "foo".)
 
 Notice that part of this process checks to see if there are any existing migrations and applies them.
 
@@ -255,11 +264,11 @@ If all has gone well we can fire up our application and take it for a spin. Type
 You should see this:
 
 ```
-Performing system checks...
+Performing system checks…
 
 System check identified no issues (0 silenced).
-February 23, 2015 - 17:25:57
-Django version 1.7.4, using settings 'codekeeper.settings'
+April 13, 2015 - 17:10:18
+Django version 1.8, using settings ‘codekeeper.settings’
 Starting development server at http://127.0.0.1:8000/
 Quit the server with CONTROL-C.
 ```
@@ -268,7 +277,7 @@ If you open Chrome and navigate to `http://localhost:8000/` you should be greete
 
 ## Writing Views
 
-In our previous example we wrote a generic Django class-based view to handle a simple request for "Hello World". However, in keeping with the idea of creating a Browseable API, we should think about making our home page useful for both humans *and* computers.
+In our previous example we wrote a generic Django class-based view to handle a simple request for the home page, and displayed  "Hello World”, properly formatted in HTML. However, in keeping with the idea of creating a Browseable API, we should think about making our home page useful for both humans *and* computers.
 
 One of the best ways to start with this is to ensure our API is *self-describing*; that is, a machine can visit our site and configure its behaviour dynamically, according to the types of data it can retrieve. The easiest way to do this is to ensure that we provide hints on our machine-readable version of the places it can look for more information.
 
@@ -276,7 +285,7 @@ At the same time, we are still building a human-readable website, so we need to 
 
 Let's first start with a look at the snippet view.
 
-`snippet.py`
+`views/snippet.py`
 
     from rest_framework import generics
     from rest_framework import renderers
@@ -310,7 +319,7 @@ The `renderer_classes` on each of these views determines the types of data each 
 
 The `CustomHTMLRenderer` is an extension of the REST Framework's `TemplateHTMLRenderer`. Create a file in your `renderers` directory called `custom_html_renderer.py` and add to it the following code:
 
-`custom_html_renderer.py`
+`renderers/custom_html_renderer.py`
 
     from rest_framework.renderers import TemplateHTMLRenderer
 
@@ -348,14 +357,13 @@ For the templates, you should create a folder in your `templates` folder called 
 
 For now, you can do a very simple placeholder template.
 
-`snippet_list.html`
+`templates/snippet/snippet_list.html`
 
     {% extends "base.html" %}
 
     {% block body %}
     <h1>List</h1>
     <ul>
-    {{ content }}
     {% for snippet in content %}
         <li><a href="{{ snippet.url }}">{{ snippet.title }}</a></li>
     {% endfor %}
@@ -389,10 +397,6 @@ Next, let's wire this up in our `urls.py`.
     from codekeeper.views.snippet import SnippetList, SnippetDetail
 
     urlpatterns = patterns('',
-        # Examples:
-        # url(r'^$', 'codekeeper.views.home', name='home'),
-        # url(r'^blog/', include('blog.urls')),
-
         url(r'^$', HomePageView.as_view(), name="home"),
         url(r'^snippets/$', SnippetList.as_view(), name="snippet-list"),
         url(r'^snippet/(?P<pk>[0-9]+)/$', SnippetDetail.as_view(), name="snippet-detail"),
@@ -403,7 +407,7 @@ Before we continue, we'll need to also create the same view for our `Person` obj
 
 Our `views/person.py` file looks very similar to our `snippet.py`
 
-`person.py`
+`views/person.py`:
 
     from rest_framework import generics
     from rest_framework import renderers
@@ -436,69 +440,29 @@ Add these lines to your `urls.py` (making sure you import the views!):
     url(r'^people/$', PersonList.as_view(), name="person-list"),
     url(r'^person/(?P<pk>[0-9]+)/$', PersonDetail.as_view(), name="person-detail"),
 
+*Note*: Notice the differences in plurals (for lists) and singulars, especially for “people” vs. “person”.
 
-`place.py`
-```
-from codekeeper.models.place import Place
-from codekeeper.serializers.place import PlaceSerializer
-from rest_framework import generics
+Do the same for `views/tag.py`. By this point you should know what to do, so I won’t reproduce the code here.
 
-class PlaceList(generics.ListCreateAPIView):
-    model = Place
-    serializer_class = PlaceSerializer
+Next, modify your `view/home.py` to add the new views we’ve created to the Response object in the `get` method:
 
+		def get(self, request, *args, **kwargs):
+    			response = Response({
+            ‘snippets’: reverse(‘snippet-list’, request=request),
+            ‘tags’: reverse(‘tag-list’, request=request),
+            ‘people’: reverse(‘person-list’, request=request)
+        })
+        return response
 
-class PlaceDetail(generics.RetrieveUpdateDestroyAPIView):
-    model = Place
-    serializer_class = PlaceSerializer
-```
-
-Now, let's hook up these new views in our `urls.py` file. It should look like this:
-
-```
-from django.conf.urls import patterns, include, url
-from django.contrib import admin
-
-from rest_framework.urlpatterns import format_suffix_patterns
-
-from codekeeper.views.activity import ActivityList, ActivityDetail
-from codekeeper.views.place import PlaceList, PlaceDetail
-from codekeeper.views.person import PersonList, PersonDetail
-
-urlpatterns = []
-
-urlpatterns += format_suffix_patterns(
-    patterns('codekeeper.views.main',
-        url(r'^$', 'home'),
-        url(r'^browse/$', 'api_root'),
-
-        url(r'^activities/$', ActivityList.as_view(), name="activity-list"),
-        url(r'^activity/(?P<pk>[0-9]+)/$', ActivityDetail.as_view(), name="activity-detail"),
-        url(r'^places/$', PlaceList.as_view(), name="place-list"),
-        url(r'^place/(?P<pk>[0-9]+)/$', PlaceDetail.as_view(), name="place-detail"),
-        url(r'^people/$', PersonList.as_view(), name="person-list"),
-        url(r'^person/(?P<pk>[0-9]+)/$', PersonDetail.as_view(), name="person-detail"),
-
-        url(r'^admin/', include(admin.site.urls)),
-))
-```
-
-*Note*: Notice the differences in plurals (for lists) and singulars, especially for "people" and "activities."
-
-Finally, let's add a temporary configuration parameter in our `settings.py` to define the default renderer. Scroll to the bottom and add the following:
-
-```
-REST_FRAMEWORK = {
-    'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework.renderers.JSONRenderer',
-    ),
-}
-```
-
-Once all of this is in place, make sure your develoment server is still running and then refresh the page. You should see something like this:
+Once all of this is in place, make sure your development server is still running and then refresh the page. You should still see your “Hello World” message. However, the real magic happens when you append `?format=json` to your URL:
 
 ![Figure 5](figures/figure5.png)
 
+The same view, with a different format flag, gives us a JSON-formatted response! To really play with this, try changing the format flag to `api`:
+
+![Figure 5b](figures/figure5b.png)
+
+This is the Django REST Framework’s “Browsable API” template, and it can be a pretty useful tool for poking around a REST API.
 
 Note: Make sure to use Google Chrome because the links may not work in Safari.
 This is the beginning of our API! Clicking on any of the links will bring you to a blank page, but that's because we have no content in our system yet.
@@ -509,36 +473,30 @@ Before we continue, let's look at the Django Admin interface. This will allow us
 
 Finally, create a new folder, 'codekeeper/admin' and add two new files, `__init__.py` and `admin.py`.
 
-Create the following in this file:
+Create the following in `admin/admin.py`:
 
-```
-from django.contrib import admin
+		from django.contrib import admin
 
-from codekeeper.models.activity import Activity
-from codekeeper.models.person import Person
-from codekeeper.models.place import Place
+		from codekeeper.models.snippet import Snippet
+		from codekeeper.models.person import Person
+		from codekeeper.models.tag import Tag
 
+		@admin.register(Snippet)
+		class SnippetAdmin(admin.ModelAdmin):
+    			pass
 
-class ActivityAdmin(admin.ModelAdmin):
-    pass
+		@admin.register(Person)
+		class PersonAdmin(admin.ModelAdmin):
+    			pass
 
+		@admin.register(Tag)
+		class TagAdmin(admin.ModelAdmin):
+    			pass
 
-class PersonAdmin(admin.ModelAdmin):
-    pass
-
-
-class PlaceAdmin(admin.ModelAdmin):
-    pass
-
-
-admin.site.register(Activity, ActivityAdmin)
-admin.site.register(Person, PersonAdmin)
-admin.site.register(Place, PlaceAdmin)
-```
 
 In the `__init__.py` file add the following line:
 
-`from codekeeper.admin.admin import *`
+		from codekeeper.admin import admin
 
 Start your development server and point your web browser to `http://localhost:8000/admin`. You should be brought to a log-in page, where you should enter the username and password you entered when you synchronized your database.
 
@@ -548,17 +506,15 @@ Once in you should be at a screen that looks like this:
 
 Clicking on any of the content types will bring you to a screen where we can add or edit records.
 
-Before continuing, notice that "Activitys" and "Persons" are not properly named -- they should be "Activities" and "People". Django did its best to guess the plural form, but sometimes it gets it wrong. Let's fix this up.
+Before continuing, notice that "Persons" is not properly named -- it should be “People”. Django did its best to guess the plural form, but sometimes it gets it wrong. Let's fix this up.
 
-Go to your `models/activity.py` file and change your `Meta` class to the following:
+Go to your `models/person.py` file and change your `Meta` class to the following:
 
-```
-class Meta:
-    app_label = "codekeeper"
-    verbose_name_plural = "activities"
-```
+		class Meta:
+    			app_label = "codekeeper"
+		    verbose_name_plural = “people”
 
-Do the same type of change for your `models/person.py` file. If you did not quit your development server in your terminal, you should now just be able to refresh the page and see your changes.
+If you did not quit your development server in your terminal, you should now just be able to refresh the page and see your changes.
 
 ![Figure 6b](figures/figure6b.png)
 
@@ -566,141 +522,112 @@ Now, let's create some dummy data to play with.
 
 ## Entering data
 
-Start with the Activity entry and create a couple activities and time. It doesn't matter what you enter -- jogging, answering e-mails, browsing facebook -- this is just to get a feel for how this site will work.
+Start with the Snippet entry and create a couple activities and time. It doesn't matter what you enter -- jogging, answering e-mails, browsing facebook -- this is just to get a feel for how this site will work.
 
 You will notice that you need to specify both a location and a partner for this activity. The "+" sign next to each of these fields allows you to add new entries to these tables in place.
 
-After you've got all of your data entered, go to `http://localhost:8000/browse` to see what data is reflected in your API.
+After you've got all of your data entered you can manually check the data representations in your front-end. Go to `http://localhost:8000/snippets/?format=json` and choose to see what data is reflected in your API. It might look something like this:
 
-## Review
+![Figure 7](figures/figure7.png)
+
+It’s not pretty, but it’s a start.
+
+## Poking Around
 
 Let's pause for a moment and review where we are now.
 
-We have an application with some basic testing data in it that allows us to view and browse the site in a raw data form. We have the Django Admin interface up and running.
+We have an application with some basic testing data in it that allows us to view and browse the site in a raw data form. We have the Django Admin interface up and running, and we can display the data in HTML, JSON, and the Browsable API.
 
-This is a good start, but it's not very human friendly. In our next section let's focus on getting our "look and feel" up and running.
+Next, let’s have a look at a pretty useful little command-line tool that we can use to dig into the API a bit deeper.
 
-# Creating the user interface
+## cURL
 
-Recall the role of the "Renderers" that we discussed earlier. Their job is to do "content negotiation" -- essentially deciding which format the client (human or computer) wishes to see. 
+In the previous part of this tutorial the command-line URL utility, cURL, was introduced as a way of interacting with an HTTP Server. In this section we’ll look at some of the more advanced uses of cURL for poking around an API. 
 
-Since our web application will be primarily focused on human users, we should make sure that the HTML interface is the default interface.
+Let’s start with the basics:
 
-Let's begin by creating a very simple renderer. In your `renderers` folder create a file called `custom_html_renderer.py` with the following code:
+		$> curl -XGET http://localhost:8000/
 
-```
-from rest_framework.renderers import TemplateHTMLRenderer
+This should retrieve the HTML version of your home page. Pretty straightforward. Of course, we can also do this:
 
+		$> curl -XGET http://localhost:8000/\?format\=json
 
-class CustomHTMLRenderer(TemplateHTMLRenderer):
-    def render(self, data, accepted_media_type=None, renderer_context=None):
-        """
-        Renders data to HTML, using Django's standard template rendering.
+to retrieve the JSON response. However, this isn’t really RESTful. It’s a useful shortcut in the browser, since we can’t really control the response type, but with cURL we can ask for a specific format to be returned without embedding it in the URL itself. To do this, we let the server now that we specifically want the JSON representation:
 
-        The template name is determined by (in order of preference):
+		$> curl -XGET -H "Accept: application/json" http://localhost:8000/
 
-        1. An explicit .template_name set on the response.
-        2. An explicit .template_name set on this class.
-        3. The return result of calling view.get_template_names().
-        """
-        renderer_context = renderer_context or {}
-        view = renderer_context['view']
-        request = renderer_context['request']
-        response = renderer_context['response']
+Which should return the same response. Let’s look at the verbose output to see a bit more of what’s happening here:
 
-        if response.exception:
-            template = self.get_exception_template(response)
-        else:
-            template_names = self.get_template_names(response, view)
-            template = self.resolve_template(template_names)
+		$> curl -v -XGET -H "Accept: application/json" http://localhost:8000/
 
-        context = self.resolve_context({'content': data}, request, response)
-        return template.render(context)
-```
+		* Hostname was NOT found in DNS cache
+		* Trying 127.0.0.1…
+		* Connected to localhost (127.0.0.1) port 8000 (#0)
+	> GET / HTTP/1.1
+	> User-Agent: curl/7.37.1
+	> Host: localhost:8000
+	> Accept: application/json
+	>
+		* HTTP 1.0, assume close after body
+	< HTTP/1.0 200 OK
+	< Date: Mon, 13 Apr 2015 19:20:54 GMT
+	< Server: WSGIServer/0.2 CPython/3.4.2
+	< Vary: Accept, Cookie
+	< Content-Type: application/json
+	< Allow: GET, HEAD, OPTIONS
+	< X-Frame-Options: SAMEORIGIN
+	<
+		* Closing connection 0
+	{“tags”:”http://localhost:8000/tags/“,”snippets”:”http://localhost:8000/snippets/“,”people”:”http://localhost:8000/people/“}
 
-This will form the basis for our view renderers.
+A few things should make a bit more sense to you now:
 
-Open your `views/activity.py` and add the following code:
+1. The `-H “Accept: application/json”` argument to cURL added the `Accept: application/json` request header to the outgoing request.
+2. The server responded with a `200 OK` status code to let us know that everything’s cool, yo.
+3. The server has also passed on some “By the way…” information by letting us know the HTTP verbs that this endpoint accepts (“GET, HEAD, OPTIONS”).
+4. Finally, the actual content of the message is sent back in the message body.
 
-```
-from codekeeper.renderers.custom_html_renderer import CustomHTMLRenderer
+Next, let’s have a look at one of our existing snippets:
 
-class ActivityListHTMLRenderer(CustomHTMLRenderer):
-    template_name = "activity/activity_list.html"
+		$> curl -XGET -H "Accept: application/json" http://localhost:8000/snippet/1/
 
+This should give us the data that we asked for. However, what if we wanted to delete this snippet? How do we do this programmatically?
 
-class ActivityDetailHTMLRenderer(CustomHTMLRenderer):
-    template_name = "activity/activity_detail.html"
-```
+		$> curl -v -XDELETE -H "Accept: application/json" http://localhost:8000/snippet/1/
 
-Repeat this for both Place and Person, editing the name of the class and the template name as needed.
+			*   Trying 127.0.0.1…
+		* Connected to localhost (127.0.0.1) port 8000 (#0)
+	> DELETE /snippet/1/ HTTP/1.1
+	> User-Agent: curl/7.37.1
+	> Host: localhost:8000
+	> Accept: application/json
+	>
+		* HTTP 1.0, assume close after body
+	< HTTP/1.0 204 NO CONTENT
+	< Date: Mon, 13 Apr 2015 19:28:13 GMT
+	< Server: WSGIServer/0.2 CPython/3.4.2
+	< Vary: Accept, Cookie
+	< Content-Length: 0
+	< Allow: GET, PUT, PATCH, DELETE, HEAD, OPTIONS
+	< X-Frame-Options: SAMEORIGIN
+	<
+		* Closing connection 0
 
-Next, let's create our templates that we have defined for our renderers. In our `templates` directory create the `activity`, `place` and `person` directories, and then create each of the template files that you referenced (e.g., 'activity/activity_list.html' and 'activity/activity_detail.html')
+What happened? The answer is somewhat hidden in the status code: 
 
-Now, let's edit each of our views to tie in the HTML renderers. For each one of your views add the following lines, customizing as necessary:
+	< HTTP/1.0 204 NO CONTENT
 
-`renderer_classes = (JSONRenderer, JSONPRenderer, ActivityListHTMLRenderer)`
+Based on this response we know two things: 1) the request was successful, since it’s a 2XX status code, and 2) the response had no content. Let’s see what happens when we try to fetch this snippet again:
 
-or 
+	$> curl -XGET -H "Accept: application/json" http://localhost:8000/snippet/1/
 
-`renderer_classes = (JSONRenderer, JSONPRenderer, ActivityDetailHTMLRenderer)`
+In our response we see:
 
-At the top of each views file you should import the built-in JSON and JSONP renderers as well:
+	< HTTP/1.0 404 NOT FOUND
 
-`from rest_framework.renderers import JSONRenderer, JSONPRenderer`
+Buh bye snippet 1!
 
-Now you should be able to start your development server and navigate to `http://localhost:8000/activities/`. However, you are only seeing a blank page! Let's try adding some text to `activity/activity_list.html`.
-
-```
-{% extends "base.html" %}
-
-{% block body %}
-    <h4>Hello World</h4>
-{% endblock %}
-```
-
-If you refresh your page. "Hello World" should show up for you now.
-
-However, there's something important going on here. Remember that our web site *should* respond to either request for HTML content, or requests for JSON content. What happens if we try and query the same URL with an `Accept: application/json` header? Open up a new terminal window (make sure your development server is still running) and use curl to query the server:
-
-`$> curl -XGET -H "Accept: application/json" http://localhost:8000/activites/`
-
-You should get the following response:
-
-```
-~|⇒ curl -XGET -H "Accept: application/json" http://localhost:8000/activities/
-[{"url": "http://localhost:8000/activity/1/", "title": "Answering E-mail", "start_time": "2014-04-25T21:28:03Z", "end_time": "2014-04-25T00:00:00Z", "place": "http://localhost:8000/place/1/", "partner": null, "created": "2014-04-25T21:28:15.953Z", "updated": "2014-04-25T21:28:15.953Z"}, {"url": "http://localhost:8000/activity/2/", "title": "Browsing Facebook", "start_time": "2014-04-25T12:00:00Z", "end_time": "2014-04-25T21:28:48Z", "place": "http://localhost:8000/place/1/", "partner": null, "created": "2014-04-25T21:28:51.205Z", "updated": "2014-04-25T21:28:51.205Z"}, {"url": "http://localhost:8000/activity/3/", "title": "Jogging", "start_time": "2014-04-24T12:00:00Z", "end_time": "2014-04-24T13:00:00Z", "place": "http://localhost:8000/place/3/", "partner": "http://localhost:8000/person/1/", "created": "2014-04-25T21:29:34.652Z", "updated": "2014-04-25T21:38:36.355Z"}]
-```
-
-Just for fun, let's change our Accept header to text/html and try again:
-
-```
-$> curl -XGET -H "Accept: text/html" http://localhost:8000/activities/
-<!doctype html>
-
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-
-  <title>codekeeper: Keep your Time</title>
-
-  <link rel="stylesheet" href="/static/css/styles.css">
-
-  <!--[if lt IE 9]>
-  <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-  <![endif]-->
-  <script src="/static/js/scripts.js"></script>
-</head>
-
-<body>
-
-    <h4>Hello World</h4>
-
-</body>
-</html>
-```
-
-Now we have the beginnings of a database-driven website AND API. You should give yourself a pat on the back for getting this far.
+Of course, this is problematic in any public-facing website, because we don’t want just anyone sending DELETE requests to our data. 
 
 ## Displaying data in the templates
 
