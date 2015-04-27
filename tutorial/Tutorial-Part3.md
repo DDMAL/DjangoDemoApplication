@@ -124,21 +124,21 @@ Next, let's create a couple basic views so that we can work with our system. In 
 `views/home.py`:
 
     from rest_framework import views
-		from rest_framework import renderers
-		from rest_framework.response import Response
-		from rest_framework.reverse import reverse
-		from codekeeper.renderers.custom_html_renderer import CustomHTMLRenderer
+        from rest_framework import renderers
+        from rest_framework.response import Response
+        from rest_framework.reverse import reverse
+        from codekeeper.renderers.custom_html_renderer import CustomHTMLRenderer
 
 
-		class HomePageView(views.APIView):
-    			template_name = “index.html”
-		    renderer_classes = (CustomHTMLRenderer,
+        class HomePageView(views.APIView):
+                template_name = "index.html"
+            renderer_classes = (CustomHTMLRenderer,
                         renderers.JSONRenderer,
                         renderers.BrowsableAPIRenderer)
 
-    			def get(self, request, *args, **kwargs):
-        			response = Response()
-    			    return response
+                def get(self, request, *args, **kwargs):
+                    response = Response()
+                    return response
 
 
 This sets up our homepage view, which we will eventually hook up in our `urls.py`.
@@ -268,7 +268,7 @@ Performing system checks…
 
 System check identified no issues (0 silenced).
 April 13, 2015 - 17:10:18
-Django version 1.8, using settings ‘codekeeper.settings’
+Django version 1.8, using settings 'codekeeper.settings'
 Starting development server at http://127.0.0.1:8000/
 Quit the server with CONTROL-C.
 ```
@@ -277,7 +277,7 @@ If you open Chrome and navigate to `http://localhost:8000/` you should be greete
 
 ## Writing Views
 
-In our previous example we wrote a generic Django class-based view to handle a simple request for the home page, and displayed  "Hello World”, properly formatted in HTML. However, in keeping with the idea of creating a Browseable API, we should think about making our home page useful for both humans *and* computers.
+In our previous example we wrote a generic Django class-based view to handle a simple request for the home page, and displayed  "Hello World", properly formatted in HTML. However, in keeping with the idea of creating a Browseable API, we should think about making our home page useful for both humans *and* computers.
 
 One of the best ways to start with this is to ensure our API is *self-describing*; that is, a machine can visit our site and configure its behaviour dynamically, according to the types of data it can retrieve. The easiest way to do this is to ensure that we provide hints on our machine-readable version of the places it can look for more information.
 
@@ -440,21 +440,21 @@ Add these lines to your `urls.py` (making sure you import the views!):
     url(r'^people/$', PersonList.as_view(), name="person-list"),
     url(r'^person/(?P<pk>[0-9]+)/$', PersonDetail.as_view(), name="person-detail"),
 
-*Note*: Notice the differences in plurals (for lists) and singulars, especially for “people” vs. “person”.
+*Note*: Notice the differences in plurals (for lists) and singulars, especially for "people" vs. "person".
 
-Do the same for `views/tag.py`. By this point you should know what to do, so I won’t reproduce the code here.
+Do the same for `views/tag.py`. By this point you should know what to do, so I won't reproduce the code here.
 
-Next, modify your `view/home.py` to add the new views we’ve created to the Response object in the `get` method:
+Next, modify your `view/home.py` to add the new views we've created to the Response object in the `get` method:
 
-		def get(self, request, *args, **kwargs):
-    			response = Response({
-            ‘snippets’: reverse(‘snippet-list’, request=request),
-            ‘tags’: reverse(‘tag-list’, request=request),
-            ‘people’: reverse(‘person-list’, request=request)
-        })
+        def get(self, request, *args, **kwargs):
+            response = Response({
+                'snippets': reverse('snippet-list', request=request),
+                'tags': reverse('tag-list', request=request),
+                'people': reverse('person-list', request=request)
+            })
         return response
 
-Once all of this is in place, make sure your development server is still running and then refresh the page. You should still see your “Hello World” message. However, the real magic happens when you append `?format=json` to your URL:
+Once all of this is in place, make sure your development server is still running and then refresh the page. You should still see your "Hello World" message. However, the real magic happens when you append `?format=json` to your URL:
 
 ![Figure 5](figures/figure5.png)
 
@@ -462,7 +462,7 @@ The same view, with a different format flag, gives us a JSON-formatted response!
 
 ![Figure 5b](figures/figure5b.png)
 
-This is the Django REST Framework’s “Browsable API” template, and it can be a pretty useful tool for poking around a REST API.
+This is the Django REST Framework's "Browsable API" template, and it can be a pretty useful tool for poking around a REST API.
 
 Note: Make sure to use Google Chrome because the links may not work in Safari.
 This is the beginning of our API! Clicking on any of the links will bring you to a blank page, but that's because we have no content in our system yet.
@@ -475,28 +475,28 @@ Finally, create a new folder, 'codekeeper/admin' and add two new files, `__init_
 
 Create the following in `admin/admin.py`:
 
-		from django.contrib import admin
+        from django.contrib import admin
 
-		from codekeeper.models.snippet import Snippet
-		from codekeeper.models.person import Person
-		from codekeeper.models.tag import Tag
+        from codekeeper.models.snippet import Snippet
+        from codekeeper.models.person import Person
+        from codekeeper.models.tag import Tag
 
-		@admin.register(Snippet)
-		class SnippetAdmin(admin.ModelAdmin):
-    			pass
+        @admin.register(Snippet)
+        class SnippetAdmin(admin.ModelAdmin):
+            pass
 
-		@admin.register(Person)
-		class PersonAdmin(admin.ModelAdmin):
-    			pass
+        @admin.register(Person)
+        class PersonAdmin(admin.ModelAdmin):
+                pass
 
-		@admin.register(Tag)
-		class TagAdmin(admin.ModelAdmin):
-    			pass
+        @admin.register(Tag)
+        class TagAdmin(admin.ModelAdmin):
+                pass
 
 
 In the `__init__.py` file add the following line:
 
-		from codekeeper.admin import admin
+        from codekeeper.admin import admin
 
 Start your development server and point your web browser to `http://localhost:8000/admin`. You should be brought to a log-in page, where you should enter the username and password you entered when you synchronized your database.
 
@@ -506,13 +506,13 @@ Once in you should be at a screen that looks like this:
 
 Clicking on any of the content types will bring you to a screen where we can add or edit records.
 
-Before continuing, notice that "Persons" is not properly named -- it should be “People”. Django did its best to guess the plural form, but sometimes it gets it wrong. Let's fix this up.
+Before continuing, notice that "Persons" is not properly named -- it should be "People". Django did its best to guess the plural form, but sometimes it gets it wrong. Let's fix this up.
 
 Go to your `models/person.py` file and change your `Meta` class to the following:
 
-		class Meta:
-    			app_label = "codekeeper"
-		    verbose_name_plural = “people”
+        class Meta:
+            app_label = "codekeeper"
+            verbose_name_plural = "people"
 
 If you did not quit your development server in your terminal, you should now just be able to refresh the page and see your changes.
 
@@ -522,15 +522,15 @@ Now, let's create some dummy data to play with.
 
 ## Entering data
 
-Start with the Snippet entry and create a couple activities and time. It doesn't matter what you enter -- jogging, answering e-mails, browsing facebook -- this is just to get a feel for how this site will work.
+Start with the Snippet entry and create a couple code snippets. It doesn't matter what you enter; this is just to get a feel for how this site will work.
 
-You will notice that you need to specify both a location and a partner for this activity. The "+" sign next to each of these fields allows you to add new entries to these tables in place.
+You will notice that you need to specify a creator for this snippet, and that there is an optional place to supply tags for the snippet. The "+" sign next to each of these fields allows you to add new entries to these tables in place.
 
 After you've got all of your data entered you can manually check the data representations in your front-end. Go to `http://localhost:8000/snippets/?format=json` and choose to see what data is reflected in your API. It might look something like this:
 
 ![Figure 7](figures/figure7.png)
 
-It’s not pretty, but it’s a start.
+It's not pretty, but it's a start.
 
 ## Poking Around
 
@@ -538,105 +538,103 @@ Let's pause for a moment and review where we are now.
 
 We have an application with some basic testing data in it that allows us to view and browse the site in a raw data form. We have the Django Admin interface up and running, and we can display the data in HTML, JSON, and the Browsable API.
 
-Next, let’s have a look at a pretty useful little command-line tool that we can use to dig into the API a bit deeper.
+Next, let's have a look at a useful little command-line tool that we can use to dig into the API a bit deeper.
 
 ## cURL
 
-In the previous part of this tutorial the command-line URL utility, cURL, was introduced as a way of interacting with an HTTP Server. In this section we’ll look at some of the more advanced uses of cURL for poking around an API. 
+In the previous part of this tutorial the command-line URL utility `curl` was introduced as a way of interacting with an HTTP Server. In this section we'll look at some of the more advanced uses of cURL for poking around an API. 
 
-Let’s start with the basics:
+Let's start with the basics:
 
-		$> curl -XGET http://localhost:8000/
+        $> curl -XGET http://localhost:8000/
 
 This should retrieve the HTML version of your home page. Pretty straightforward. Of course, we can also do this:
 
-		$> curl -XGET http://localhost:8000/\?format\=json
+        $> curl -XGET http://localhost:8000/\?format\=json
 
-to retrieve the JSON response. However, this isn’t really RESTful. It’s a useful shortcut in the browser, since we can’t really control the response type, but with cURL we can ask for a specific format to be returned without embedding it in the URL itself. To do this, we let the server now that we specifically want the JSON representation:
+to retrieve the JSON response. However, this isn't really RESTful. We're controlling the response type by explicitly defining it in the URL, which is mixing the HTTP layer with the request layer. This is a useful shortcut for seeing our JSON output in the browser, since we can't easily control the response type in a browser, but with cURL we can ask for a specific format to be returned without embedding it in the URL itself. To do this, we let the server know that we specifically want the JSON representation by passing in the `Accept:` header type:
 
-		$> curl -XGET -H "Accept: application/json" http://localhost:8000/
+        $> curl -XGET -H "Accept: application/json" http://localhost:8000/
 
-Which should return the same response. Let’s look at the verbose output to see a bit more of what’s happening here:
+Which should return the same response. Let's look at the verbose output to see a bit more of what's happening here:
 
-		$> curl -v -XGET -H "Accept: application/json" http://localhost:8000/
+    $> curl -v -XGET -H "Accept: application/json" http://localhost:8000/
 
-		* Hostname was NOT found in DNS cache
-		* Trying 127.0.0.1…
-		* Connected to localhost (127.0.0.1) port 8000 (#0)
-	> GET / HTTP/1.1
-	> User-Agent: curl/7.37.1
-	> Host: localhost:8000
-	> Accept: application/json
-	>
-		* HTTP 1.0, assume close after body
-	< HTTP/1.0 200 OK
-	< Date: Mon, 13 Apr 2015 19:20:54 GMT
-	< Server: WSGIServer/0.2 CPython/3.4.2
-	< Vary: Accept, Cookie
-	< Content-Type: application/json
-	< Allow: GET, HEAD, OPTIONS
-	< X-Frame-Options: SAMEORIGIN
-	<
-		* Closing connection 0
-	{“tags”:”http://localhost:8000/tags/“,”snippets”:”http://localhost:8000/snippets/“,”people”:”http://localhost:8000/people/“}
+    * Hostname was NOT found in DNS cache
+    * Trying 127.0.0.1…
+    * Connected to localhost (127.0.0.1) port 8000 (#0)
+    > GET / HTTP/1.1
+    > User-Agent: curl/7.37.1
+    > Host: localhost:8000
+    > Accept: application/json
+    >
+        * HTTP 1.0, assume close after body
+    < HTTP/1.0 200 OK
+    < Date: Mon, 13 Apr 2015 19:20:54 GMT
+    < Server: WSGIServer/0.2 CPython/3.4.2
+    < Vary: Accept, Cookie
+    < Content-Type: application/json
+    < Allow: GET, HEAD, OPTIONS
+    < X-Frame-Options: SAMEORIGIN
+    <
+    * Closing connection 0
+    {"tags":"http://localhost:8000/tags/","snippets":"http://localhost:8000/snippets/","people":"http://localhost:8000/people/"}
 
 A few things should make a bit more sense to you now:
 
-1. The `-H “Accept: application/json”` argument to cURL added the `Accept: application/json` request header to the outgoing request.
-2. The server responded with a `200 OK` status code to let us know that everything’s cool, yo.
-3. The server has also passed on some “By the way…” information by letting us know the HTTP verbs that this endpoint accepts (“GET, HEAD, OPTIONS”).
-4. Finally, the actual content of the message is sent back in the message body.
+1. The `-H "Accept: application/json"` argument added the `Accept: application/json` request header to the outgoing request.
+2. The server responded with a `200 OK` status code to let us know that everything's cool, yo.
+3. The server has also passed on some "By the way…" information by letting us know the HTTP verbs that this endpoint accepts ("GET, HEAD, OPTIONS").
+4. Finally, the actual content of the message is sent back in the message body at the very end.
 
-Next, let’s have a look at one of our existing snippets:
+Next, let's have a look at one of our existing snippets:
 
-		$> curl -XGET -H "Accept: application/json" http://localhost:8000/snippet/1/
+    $> curl -XGET -H "Accept: application/json" http://localhost:8000/snippet/1/
 
 This should give us the data that we asked for. However, what if we wanted to delete this snippet? How do we do this programmatically?
 
-		$> curl -v -XDELETE -H "Accept: application/json" http://localhost:8000/snippet/1/
+    $> curl -v -XDELETE -H "Accept: application/json" http://localhost:8000/snippet/1/
 
-			*   Trying 127.0.0.1…
-		* Connected to localhost (127.0.0.1) port 8000 (#0)
-	> DELETE /snippet/1/ HTTP/1.1
-	> User-Agent: curl/7.37.1
-	> Host: localhost:8000
-	> Accept: application/json
-	>
-		* HTTP 1.0, assume close after body
-	< HTTP/1.0 204 NO CONTENT
-	< Date: Mon, 13 Apr 2015 19:28:13 GMT
-	< Server: WSGIServer/0.2 CPython/3.4.2
-	< Vary: Accept, Cookie
-	< Content-Length: 0
-	< Allow: GET, PUT, PATCH, DELETE, HEAD, OPTIONS
-	< X-Frame-Options: SAMEORIGIN
-	<
-		* Closing connection 0
+    *   Trying 127.0.0.1…
+    * Connected to localhost (127.0.0.1) port 8000 (#0)
+    > DELETE /snippet/1/ HTTP/1.1
+    > User-Agent: curl/7.37.1
+    > Host: localhost:8000
+    > Accept: application/json
+    >
+    * HTTP 1.0, assume close after body
+    < HTTP/1.0 204 NO CONTENT
+    < Date: Mon, 13 Apr 2015 19:28:13 GMT
+    < Server: WSGIServer/0.2 CPython/3.4.2
+    < Vary: Accept, Cookie
+    < Content-Length: 0
+    < Allow: GET, PUT, PATCH, DELETE, HEAD, OPTIONS
+    < X-Frame-Options: SAMEORIGIN
+    <
+    * Closing connection 0
 
 What happened? The answer is somewhat hidden in the status code: 
 
-	< HTTP/1.0 204 NO CONTENT
+    < HTTP/1.0 204 NO CONTENT
 
-Based on this response we know two things: 1) the request was successful, since it’s a 2XX status code, and 2) the response had no content. Let’s see what happens when we try to fetch this snippet again:
+Based on this response we know two things: 1) the request was successful, since it's a 2XX status code, and 2) the response had no content. Let's see what happens when we try to fetch this snippet again:
 
-	$> curl -XGET -H "Accept: application/json" http://localhost:8000/snippet/1/
+    $> curl -XGET -H "Accept: application/json" http://localhost:8000/snippet/1/
 
 In our response we see:
 
-	< HTTP/1.0 404 NOT FOUND
+    < HTTP/1.0 404 NOT FOUND
 
 Buh bye snippet 1!
 
-Of course, this is problematic in any public-facing website, because we don’t want just anyone sending DELETE requests to our data. 
+Of course, this is problematic in any public-facing website, because we don't want just anyone sending DELETE requests to our data. We'll get to security later in the tutorial, though.
 
 ## Displaying data in the templates
 
 Let's take a closer look at the `renderers/custom_html_renderer.py` file and the class we defined in it. You'll notice that towards the end it looks like this:
 
-```
-context = self.resolve_context({'content': data}, request, response)
-return template.render(context)
-```
+    context = self.resolve_context({'content': data}, request, response)
+    return template.render(context)
 
 The `context` variable is what is responsible for passing along the data from our view to the template. The most important thing to note here is the `content` key word. This is the variable that will allow us to access all the data that has been passed through this renderer and into our template system.
 
@@ -644,18 +642,18 @@ The `context` variable is what is responsible for passing along the data from ou
 > template, you can print the `content` variable directly by rendering it
 > in a Django template. Just put `{{ content }}` in your template and refresh.
 
-To see how this might work, open up the `activity/activity_list.html` template file and replace the content of the "body" block with the following Django template code:
+To see how this might work, open up the `snippet/snippet_list.html` template file and replace the content of the "body" block with the following Django template code:
 
-```
-{% block body %}
-    <ul>
-    {% for activity in content %}
-        <li>{{ activity.title }}</li>
-    {% endfor %}
-    </ul>
-{% endblock %}
-```
-This will render a list of the activities we have in our database in our web browser. It doesn't look like much, but we know it works.
+    {% block body %}
+        <h1>List</h1>
+        <ul>
+        {% for snippet in content %}
+            <li>{{ snippet.title }}</li>
+        {% endfor %}
+        </ul>
+    {% endblock %}
+
+This will render a list of the snippets we have in our database in our web browser. It doesn't look like much, but we know it works.
 
 ![Figure 8](figures/figure8.png)
 
@@ -676,48 +674,55 @@ To hook these up we just edit our `base.html` file and import the files.
 Edit your `base.html` file to include these files like this:
 
 ```
-<!doctype html>
+<!DOCTYPE html>
 
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+    <meta charset="utf-8">
 
-  <title>codekeeper: Keep your Time</title>
-
-  <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap.css">
-  <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap-theme.css">
-  <link rel="stylesheet" href="{{ STATIC_URL }}css/styles.css">
-
-  <script src="{{ STATIC_URL }}js/jquery.js"></script>
-  <script src="{{ STATIC_URL }}js/bootstrap.js"></script>
-  <!--[if lt IE 9]>
-  <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-  <![endif]-->
-  <script src="{{ STATIC_URL }}js/scripts.js"></script>
+    <title>Code Keeper Snippets</title>
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap.css">
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap-theme.css">
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/styles.css">
 </head>
 
 <body>
-    <div class="container">
-        <div class="page-header">
-            <div class="row">
-                <div class="col-md-2">
-                    <img src="{{ STATIC_URL }}img/timekeeper.jpg" />
-                </div>
-                <div class="col-md-10">
-                    <h1>TimeKeeper</h1>
-                    <p class="lead">Keep your Time</p>
-                </div>
+<div class="container">
+    <div class="page-header">
+        <div class="row">
+            <div class="col-lg-2">
+                <img src="{{ STATIC_URL }}img/codekeeper.png" />
+            </div>
+            <div class="col-lg-10">
+                <h1>CodeKeeper</h1>
+                <p class="lead">Keep your code</p>
             </div>
         </div>
-        {% block body %}
-
-        {% endblock %}
     </div>
+    {% block body %}
+
+    {% endblock %}
+</div>
+<script src="{{ STATIC_URL }}js/jquery.min.js"></script>
+<script src="{{ STATIC_URL }}js/bootstrap.min.js"></script>
+<!--[if lt IE 9]>
+<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+<script src="{{ STATIC_URL }}js/scripts.js"></script>
+
 </body>
 </html>
 ```
 
-Note that we've added a little image of a clock in our `static/img` folder. You should do the same.
+> You may be wondering why we include the JavaScript at the end and not in the header?
+> This is an optimization technique; since some JavaScript files can take a long
+> time to load, we place them towards the end of the page so that the browser can load and
+> display the page before starting to download the page. While it doesn't make it load
+> faster, it gives the user the impression that it is loading faster since the
+> page will show up sooner; otherwise, the user will have to wait until all the files in the
+> header have loaded before they see the page contents.
+
+Note that we've added a little logo in our `static/img` folder. You should do the same.
 
 Just to round it out, let's update our `index.html` template to allow users to click links to browse our site:
 
@@ -725,12 +730,12 @@ Just to round it out, let's update our `index.html` template to allow users to c
 {% extends "base.html" %}
 
 {% block body %}
-    <h1>Explore our site</h1>
-    <ul>
-        <li><a href="/activities">Activities</a></li>
-        <li><a href="/places">Places</a></li>
-        <li><a href="/people">People</a></li>
-    </ul>
+<h1>Explore our site</h1>
+<ul>
+    <li><a href="/snippets/">Snippets</a></li>
+    <li><a href="/tags/">Tags</a></li>
+    <li><a href="/people/">People</a></li>
+</ul>
 {% endblock %}
 ```
 
@@ -738,41 +743,44 @@ Visiting the website in a browser will now display our base template with the da
 
 ## Templating the detail and list pages
 
-To save space and time writing this section, I won't go through every step of the customization and design of the pages, but I will demonstrate how to theme the "activity" list and detail pages. We can expand the templates created previously and add some basic information display. Remember that we are accessing everything on the model through the `content` variable. 
+To save space and time writing this section, I won't go through every step of the customization and design of the pages, but I will demonstrate how to theme the "snippet" list and detail pages. We can expand the templates created previously and add some basic information display. Remember that we are accessing everything on the model through the `content` variable. 
 
-Open up the `activity/activity_list.html` page. We will make a small change to link each item in the list to an item page.
+Open up the `snippet/snippet_list.html` page. We will make a small change to link each item in the list to an item page.
 
 ```
 {% extends "base.html" %}
 
 {% block body %}
+    <h1>Snippets</h1>
     <ul>
-    {% for activity in content %}
-        <li><a href="{{ activity.url }}">{{ activity.title }}</a></li>
+    {% for snippet in content %}
+        <li><a href="{{ snippet.url }}">{{ snippet.title }}</a></li>
     {% endfor %}
     </ul>
 {% endblock %}
 ```
 
-If you refresh your activity list page now, the items in the list should be hyperlinked. Clicking on the link will show you a blank page. To customize this look, add the following code to `activity/activity_detail.html`.
+If you refresh your snippet list page now, the items in the list should be hyperlinked. Clicking on the link will show you a blank page. To customize this look, add the following code to `snippet/snippet_detail.html`.
 
 ```
 {% extends "base.html" %}
 
 {% block body %}
-    <h2>{{ content.title }}</h2>
+    <h1>Snippet Detail</h1>
     <dl>
-        <dt>Start Time</dt>
-        <dd>{{ content.start_time }}</dd>
-        <dt>End Time</dt>
-        <dd>{{ content.end_time }}</dd>
+        <dt>Snippet title</dt>
+        <dd>{{ content.title }}</dd>
+        <dt>Snippet</dt>
+        <dd>{{ content.snippet }}</dd>
+        <dt>Creator</dt>
+        <dd>{{ content.creator }}</dd>
     </dl>
 {% endblock %}
 ```
 
 Notice here that we use the `content` variable to access the fields of the model that we are displaying.
 
-If you refresh the detail page for one of your activities, you should now see a display of the information contained in your database for each entry in your activity table.
+If you refresh the detail page for one of your snippets, you should now see a display of the information contained in your database for each entry in your snippet table.
 
 You now have the basics for inserting data into a template, so you can build the list and detail views on your own. If you get stuck you should refer to the templates in the GitHub repository for this tutorial for any further changes and modifications.
 
