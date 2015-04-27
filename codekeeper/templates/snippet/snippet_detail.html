@@ -1,9 +1,13 @@
 {% extends "base.html" %}
 
 {% block body %}
-    <h1>Detail</h1>
-    <h2>Snippet title: {{ content.title }}</h2>
-    <p>{{ content.snippet }}</p>
-    <p>{{ content.creator }}</p>
-
+    <h1>Snippet Detail</h1>
+    <dl>
+        <dt>Snippet title</dt>
+        <dd>{{ content.title }}</dd>
+        <dt>Snippet</dt>
+        <dd>{{ content.snippet }}</dd>
+        <dt>Creator</dt>
+        <dd>{{ content.creator }}</dd>
+    </dl>
 {% endblock %}

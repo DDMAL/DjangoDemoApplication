@@ -7,7 +7,7 @@ class Snippet(models.Model):
 
     title = models.CharField(max_length=256, blank=True, null=True)
     snippet = models.TextField()
-    tags = models.ManyToManyField("codekeeper.Tag", blank=True, null=True)
+    tags = models.ManyToManyField("codekeeper.Tag", blank=True)
     creator = models.ForeignKey("codekeeper.Person")
 
     created = models.DateTimeField(auto_now_add=True)

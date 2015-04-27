@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block body %}
-<h1>List</h1>
+<h1>Snippets</h1>
 <ul>
     {% for snippet in content %}
     <li><a href="{{ snippet.url }}">{{ snippet.title }}</a></li>

@@ -4,6 +4,7 @@ from django.db import models
 class Person(models.Model):
     class Meta:
         app_label = "codekeeper"
+        verbose_name_plural = "people"
 
     first_name = models.CharField(max_length=256, blank=True, null=True)
     last_name = models.CharField(max_length=256, blank=True, null=True)

@@ -7,16 +7,34 @@
     <title>Code Keeper Snippets</title>
 
     <link rel="stylesheet" href="{{ STATIC_URL }}css/styles.css">
-
-    <!--[if lt IE 9]>
-    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <script src="{{ STATIC_URL }}js/scripts.js"></script>
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap.css">
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap-theme.css">
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/styles.css">
 </head>
 
 <body>
-{% block body %}
+<div class="container">
+    <div class="page-header">
+        <div class="row">
+            <div class="col-lg-2">
+                <img src="{{ STATIC_URL }}img/codekeeper.png" />
+            </div>
+            <div class="col-lg-10">
+                <h1>CodeKeeper</h1>
+                <p class="lead">Keep your code</p>
+            </div>
+        </div>
+    </div>
+    {% block body %}
 
-{% endblock %}
+    {% endblock %}
+</div>
+<script src="{{ STATIC_URL }}js/jquery.min.js"></script>
+<script src="{{ STATIC_URL }}js/bootstrap.min.js"></script>
+<!--[if lt IE 9]>
+<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+<script src="{{ STATIC_URL }}js/scripts.js"></script>
+
 </body>
 </html>
