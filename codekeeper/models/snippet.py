@@ -9,6 +9,7 @@ class Snippet(models.Model):
     snippet = models.TextField()
     tags = models.ManyToManyField("codekeeper.Tag", blank=True)
     creator = models.ForeignKey("codekeeper.Person")
+    language = models.ForeignKey("codekeeper.Language")
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

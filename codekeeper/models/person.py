@@ -14,3 +14,7 @@ class Person(models.Model):
 
     def __str__(self):
         return "{0}, {1}".format(self.last_name, self.first_name)
+
+    @property
+    def full_name(self):
+        return "{0} {1}".format(self.first_name, self.last_name)

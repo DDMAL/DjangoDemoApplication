@@ -788,124 +788,223 @@ You now have the basics for inserting data into a template, so you can build the
 
 It's time we took a closer look at serializers.
 
-Let's imagine that I would like to display the title of the place for each activity. Currently, the only data the serializer is giving me is a URL to retrieve the place record -- not the actual data itself.
+Let's imagine that I would like to display the tags for each snippet. Currently, the only data the serializer is giving me is a URL to retrieve the tag record -- not the actual tag name itself.
 
-Here is a cURL request and a JSON response of an activity to illustrate:
+Here is a cURL request and a JSON response of a snippet to illustrate:
 
 ```
-$> curl -XGET -H "Accept: application/json" http://localhost:8000/activity/1/
+$> curl -XGET -H "Accept: application/json" http://localhost:8000/snippet/2/
 
 {
-    "url": "http://localhost:8000/activity/1/",
-    "title": "Jogging",
-    "start_time": "2014-04-26T18:10:08Z",
-    "end_time": "2014-04-26T18:10:11Z",
-    "place": "http://localhost:8000/place/1/",
-    "partner": "http://localhost:8000/person/1/",
-    "created": "2014-04-26T18:10:55.376Z",
-    "updated": "2014-04-26T18:10:55.376Z"
+    "url":"http://localhost:8000/snippet/2/",
+    "title":"Another snippet",
+    "snippet":"def foo():\r\n    print(\"Python is Cool!)\r\n",
+    "created":"2015-04-13T19:08:37.029027Z",
+    "updated":"2015-04-13T19:08:37.029073Z",
+    "creator":"http://localhost:8000/person/1/",
+    "tags":["http://localhost:8000/tag/1/"]
 }
 ```
 
-To get the place name, we can embed a place serializer within our activity serializer. Open up `serializers/activity.py` and create a new serializer for your place data. Your file should look like this:
+To get the tag name, we can embed a tag serializer within our snippet serializer. Open up `serializers/snippet.py` and create a new serializer for your tag data. Your file should look like this:
 
-    from timekeeper.models.activity import Activity
-    from timekeeper.models.place import Place
+    from codekeeper.models.snippet import Snippet
+    from codekeeper.models.tag import Tag
     from rest_framework import serializers
 
-    class PlaceActivitySerializer(serializers.HyperlinkedModelSerializer):
+    class TagSnippetSerializer(serializers.HyperlinkedModelSerializer):
         class Meta:
-            model = Place
+            model = Tag
 
-    class ActivitySerializer(serializers.HyperlinkedModelSerializer):
-        place = PlaceActivitySerializer()
+    class SnippetSerializer(serializers.HyperlinkedModelSerializer):
+        tags = TagSnippetSerializer(many=True)
 
         class Meta:
-            model = Activity
+            model = Snippet
 
 Now the request for the same activity results in this:
 
     {
-        place: {
-            url: "http://localhost:8000/place/1/",
-            name: "Gym",
-            latitude: null,
-            longitude: null,
-            created: "2014-04-26T18:10:22.523Z",
-            updated: "2014-04-26T18:10:22.523Z"
-        },
-        url: "http://localhost:8000/activity/1/",
-        title: "Jogging",
-        start_time: "2014-04-26T18:10:08Z",
-        end_time: "2014-04-26T18:10:11Z",
-        partner: "http://localhost:8000/person/1/",
-        created: "2014-04-26T18:10:55.376Z",
-        updated: "2014-04-26T18:10:55.376Z"
+        "url":"http://localhost:8000/snippet/2/",
+        "tags":[
+            {
+                "url":"http://localhost:8000/tag/1/",
+                "name":"Code",
+                "created":"2015-04-13T19:06:08.498891Z",
+                "updated":"2015-04-13T19:06:08.498935Z"
+            },
+            {
+                "url":"http://localhost:8000/tag/2/",
+                "name":"Cool Stuff",
+                "created":"2015-04-13T19:06:14.582711Z",
+                "updated":"2015-04-13T19:06:14.582753Z"}
+        ],
+        "title":"Another snippet",
+        "snippet":"def foo():\r\n    print(\"Python is Cool!)\r\n",
+        "created":"2015-04-13T19:08:37.029027Z",
+        "updated":"2015-04-13T19:08:37.029073Z",
+        "creator":"http://localhost:8000/person/1/"
     }
 
-We can now access the title of our place through the `place` field. Open your `templates/activity/activity_list.html` and add a column for the place.
+We can now access the title of our tag through the `tags` field. Open your `templates/snippet/snippet_list.html` and change the list to a table, adding a column for the tags.
 
     {% extends "base.html" %}
 
     {% block body %}
-        <table class="table">
-            <thead>
+    <h1>Snippets</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Snippet</th>
+                <th>Tags</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for snippet in content %}
                 <tr>
-                    <th>Activity</th>
-                    <th>Place</th>
+                    <td><a href="{{ snippet.url }}">{{ snippet.title }}</a></td>
+                    <td>
+                        <ul>
+                            {% for tag in snippet.tags %}
+                            <li><a href="{{ tag.url }}">{{ tag.name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                {% for activity in content %}
-                <tr>
-                    <td><a href="{{ activity.url }}">{{ activity.title }}</a></td>
-                    <td>{{ activity.place.name }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            {% endfor %}
+        </tbody>
+    </table>
+
     {% endblock %}
+
+Notice that our tags are now displayed as a list in the table, and that clicking on them brings you to the page for that tag.
 
 ## Computed Fields
 
-In our models we can define methods that can be used to process and extract information stored in that model. We have already seen a very simple example of this with the `__unicode__` method on the Person model:
-
+In our models we can define methods that can be used to process and extract information stored in that model. We have already seen a very simple example of this with the `__str__` method on our models:
 
     class Person(models.Model):
         ...
-        def __unicode__(self):
-            return u"{0}, {1}".format(self.last_name, self.first_name)
+        def __str__(self):
+            return "{0}, {1}".format(self.last_name, self.first_name)
 
 In other words, a computed field is a model method that acts like a field. To illustrate, let's make computed field that can display the person's name as "Firstname Lastname":
 
     @property
     def full_name(self):
-        return u"{0} {1}".format(self.first_name, self.last_name)
+        return "{0} {1}".format(self.first_name, self.last_name)
 
-We can now use this in our serializer to deliver the person's full name in "natural" order:
+We can now use this in our serializers to deliver the person's full name in "natural" order:
 
-Change your `serializers/person.py` to the following:
+Add the following new serializer to your `serializers/snippet.py`:
 
-    from timekeeper.models.person import Person
-    from rest_framework import serializers
-
-    class PersonSerializer(serializers.HyperlinkedModelSerializer):
-        full_name = serializers.Field(source="full_name")
-
+    class CreatorSnippetSerializer(serializers.HyperlinkedModelSerializer):
+        full_name = serializers.ReadOnlyField()
         class Meta:
             model = Person
 
-Now we have a new field in our output, `full_name` which we can use to display a more natural, human-friendly version of the person's name.
+And then change your SnippetSerializer to include this serializer for the `creator` field:
 
-    $> curl -XGET -H "Accept: application/json" http://localhost:8000/person/1/
+    class SnippetSerializer(serializers.HyperlinkedModelSerializer):
+        tags = TagSnippetSerializer(many=True)
+        creator = CreatorSnippetSerializer()
+
+        class Meta:
+            model = Snippet
+
+Now we have a new field in our output, `full_name` which we can use to display a more natural, human-friendly version of the creator's name.
+
+    $> curl -XGET -H "Accept: application/json" http://localhost:8000/snippet/2/
 
     {
-        "full_name": "Kris Kringle",
-        "url": "http://localhost:8000/person/1/",
-        "first_name": "Kris",
-        "last_name": "Kringle",
-        "created": "2014-04-26T18:10:41.077Z",
-        "updated": "2014-04-26T18:10:41.077Z"
+        url: "http://localhost:8000/snippet/2/",
+        tags: [
+        {
+                url: "http://localhost:8000/tag/1/",
+                name: "Code",
+                created: "2015-04-13T19:06:08.498891Z",
+                updated: "2015-04-13T19:06:08.498935Z"
+            },
+            {
+                url: "http://localhost:8000/tag/2/",
+                name: "Cool Stuff",
+                created: "2015-04-13T19:06:14.582711Z",
+                updated: "2015-04-13T19:06:14.582753Z"
+            }
+        ],
+        creator: {
+            url: "http://localhost:8000/person/1/",
+            full_name: "Andrew Hankinson",
+            first_name: "Andrew",
+            last_name: "Hankinson",
+            created: "2015-04-13T17:18:39.460934Z",
+            updated: "2015-04-13T17:18:39.460979Z"
+        },
+        title: "Another snippet",
+        snippet: "def foo(): print("Python is Cool!) ",
+        created: "2015-04-13T19:08:37.029027Z",
+        updated: "2015-04-27T19:25:26.486076Z"
     }
 
-For now, we'll leave our Django web application alone and shift to looking at Solr.
+There's a lot of useless information in there, though, so let's remove the 'created' and 'updated' fields from the output by changing our `CreatorSnippetSerializer` to specify the fields that we want:
+
+    class CreatorSnippetSerializer(serializers.HyperlinkedModelSerializer):
+        full_name = serializers.ReadOnlyField()
+        class Meta:
+            model = Person
+            fields = ('url', 'full_name')
+
+
+And finally, let's add this to our snippet list table by adding another column to the table:
+
+![Figure 8b](figures/figure8b.png)
+
+It's starting to look like a real website!
+
+# Migrations
+
+We briefly touched on migrations previously when we were setting up our database, but didn't get a chance to dive into them to see what they can do.
+
+To re-cap, migrations allow you to update your models and synchronize your changes to your database without having to dump and re-import your data. They're a huge timesaver and well worth understanding.
+
+Let's suppose that we realize that we would really like to describe the programming language of a particular snippet. Right now we *could* use the tags, but that might get a bit messy. So, let's add a new model, "Language" and add a foreign key to our existing Snippet model.
+
+`models/language.py`:
+
+    from django.db import models
+
+
+    class Language(models.Model):
+        class Meta:
+            app_label = "codekeeper"
+
+        name = models.CharField(max_length=128)
+        created = models.DateTimeField(auto_now_add=True)
+        updated = models.DateTimeField(auto_now=True)
+
+        def __str__(self):
+            return "{0}".format(self.name)
+
+(Don't forget to update your `models/__init__.py`!)
+
+`models/snippet.py`
+
+    ...
+    language = models.ForeignKey("codekeeper.Language")
+    ...
+
+After making these changes, refresh your application in your browser. You should get an error that says something along the lines of `django.db.utils.OperationalError: no such column: codekeeper_snippet.language_id`
+
+You've added the field to our model, but now we need to synchronize our model changes to our underlying database. To do that we make a migration by using the manage command.
+
+    $> python manage.py makemigrations
+    ... stuff ...
+
+If you look in your `codekeeper/migrations` folder you will see a new file. This Python code was auto-generated and will help migrate your data from the old structure to the new database structure. To run the migration:
+
+    $> python manage.py migrate
+    ... stuff ...
+
+Refreshing your snippet view now should not give you the database error, but it will give you an error about not being able to find the view 'language-detail'. This is related to your application not being able to find out how to serialize the data in your new language model. This is a path we've been down before, so getting your application up and running is now an exercise for the reader.
+
+Once you have your site back up and running we'll leave our Django web application alone and start looking at the search component of our website using a new piece of software, Solr.
