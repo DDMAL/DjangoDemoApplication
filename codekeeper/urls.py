@@ -6,6 +6,8 @@ from codekeeper.views.snippet import SnippetList, SnippetDetail
 from codekeeper.views.person import PersonList, PersonDetail
 from codekeeper.views.tag import TagList, TagDetail
 from codekeeper.views.language import LanguageList, LanguageDetail
+from codekeeper.views.search import SearchView
+
 
 urlpatterns = patterns('',
     # Examples:
@@ -21,6 +23,6 @@ urlpatterns = patterns('',
     url(r'^tag/(?P<pk>[0-9]+)/$', TagDetail.as_view(), name="tag-detail"),
     url(r'^languages/$', LanguageList.as_view(), name="language-list"),
     url(r'^language/(?P<pk>[0-9]+)/$', LanguageDetail.as_view(), name="language-detail"),
-
+    url(r'^search/$', SearchView.as_view(), name="search-view"),
     url(r'^admin/', include(admin.site.urls)),
 )
