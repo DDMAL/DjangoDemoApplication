@@ -2,11 +2,11 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<!-- This POM template modified from http://netsuke.wordpress.com/2010/06/24/launching-solr-from-maven-for-rapid-development/ -->
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>ca.mcgill.music.ddmal.timekeeper</groupId>
-	<artifactId>timekeeper-solr</artifactId>
+	<groupId>ca.mcgill.music.ddmal.codekeeper</groupId>
+	<artifactId>codekeeper-solr</artifactId>
 	<packaging>war</packaging>
 	<version>1.0-SNAPSHOT</version>
-    <name>TimeKeeper Solr</name>
+    <name>CodeKeeper Solr</name>
 	<url>http://ddmal.music.mcgill.ca</url>
 
 	<dependencies>
@@ -64,7 +64,7 @@
         </dependency>
 	</dependencies>
 	<build>
-		<finalName>timekeeper-solr</finalName>
+		<finalName>codekeeper-solr</finalName>
 		<plugins>
 			<plugin>
                 <groupId>org.eclipse.jetty</groupId>

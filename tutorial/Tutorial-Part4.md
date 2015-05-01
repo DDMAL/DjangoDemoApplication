@@ -27,11 +27,11 @@ For example, here is what my the beginning of my `pom.xml` file looks like:
 
 ```
     <modelVersion>4.0.0</modelVersion>
-    <groupId>ca.mcgill.music.ddmal.timekeeper</groupId>
-    <artifactId>timekeeper-solr</artifactId>
+    <groupId>ca.mcgill.music.ddmal.codekeeper</groupId>
+    <artifactId>codekeeper-solr</artifactId>
     <packaging>war</packaging>
     <version>1.0-SNAPSHOT</version>
-    <name>TimeKeeper Solr</name>
+    <name>CodeKeeper Solr</name>
     <url>http://ddmal.music.mcgill.ca</url>
 ```
 
@@ -39,7 +39,7 @@ Next, look down to the `build` section and change the `finalName` tag to match w
 
 Next, let's look in the `solr` directory. There are quite a few files in `solr/collection1/conf`, but we will only look at one right now: `schema.xml`.
 
-We will do more customization work in `schema.xml` but for right now we just need to change one line. Look for the `<schema name=...>` tag and change the name to something descriptive (I use the same value as the `artifactId,` 'timekeeper-solr').
+We will do more customization work in `schema.xml` but for right now we just need to change one line. Look for the `<schema name=...>` tag and change the name to something descriptive (I use the same value as the `artifactId,` 'codekeeper-solr').
 
 Now we will try to build our Solr instance. Change to the `solr` directory in your project folder (the one with `pom.xml` in it) and run the following command:
 
@@ -111,7 +111,7 @@ The last definition uses a "text_fr" field definition that applies proper French
     </fieldType>
 ```
 
-When we import our documents into Solr, we would need to load the Book title into these three fields separately. This is where `copyField` comes in handy. We can define two `copyField` directives in our `fields` section:
+When we import our documents into Solr, we would need to load the Snippet title into these three fields separately. This is where `copyField` comes in handy. We can define two `copyField` directives in our `fields` section:
 
 `<copyField source="title" dest="tg_title"/>`
 `<copyField source="title" dest="tg_fr_title"/>`
@@ -137,28 +137,20 @@ These two fields will be part of every record, no matter what other fields we ch
 At this point you should add fields for every piece of data you wish to store from your Django models. As an example, here is what I have:
 
 ```
-<field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
-<field name="type" type="string" indexed="true" stored="true" required="true" multiValued="false" />
-<field name="title" type="text_general" indexed="true" stored="true" />
-<field name="name" type="string" indexed="true" stored="true" />
-<field name="item_id" type="string" indexed="true" stored="true" />
-<field name="start_time" type="date" indexed="true" stored="true"/>
-<field name="end_time" type="date" indexed="true" stored="true"/>
-<field name="first_name" type="string" indexed="true" stored="true" />
-<field name="last_name" type="string" indexed="true" stored="true" />
-<field name="created" type="date" indexed="true" stored="true"/>
-<field name="updated" type="date" indexed="true" stored="true"/>
+    <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+    <field name="type" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+    <field name="item_id" type="int" indexed="true" stored="false" />
+    <field name="title" type="string" indexed="true" stored="true" />
+    <field name="name" type="string" indexed="true" stored="true" />
+    <field name="first_name" type="string" indexed="true" stored="true" />
+    <field name="last_name" type="string" indexed="true" stored="true" />
+    <field name="snippet" type="string" indexed="true" stored="true" />
+    <field name="tags" type="string" indexed="true" stored="true" multiValued="true" />
+    <field name="created" type="date" indexed="true" stored="true"/>
+    <field name="updated" type="date" indexed="true" stored="true"/>
 ```
 
-You may notice that we are not indexing the latitude/longitude fields on the Place model. This can be handled by the existing dynamicField definitions:
-
-```
-<!-- Type used to index the lat and lon components for the "location" FieldType -->
-<dynamicField name="*_coordinate"  type="tdouble" indexed="true"  stored="true" />
-<dynamicField name="*_p"  type="location" indexed="true" stored="true"/>
-```
-
-You may wish to clean up your `schema.xml` file at this point, commenting out or deleting un-used fields. Re-build your Solr instance and check to make sure it is working in Tomcat.
+You may wish to clean up your `schema.xml` file at this point, commenting out or deleting un-used fields. Re-build your Solr instance and check to make sure it is working in Tomcat. For now, that's all there is to it to get Solr up and running.
 
 ## Automatically Indexing Content
 
@@ -172,19 +164,19 @@ When a Django model instance is saved, either when it is created or when it is e
 
 This is useful when we want to trigger many actions (like indexing in Solr) when a record is saved, but we don't want to override the default `save()` behaviour method on that model.
 
-### SolrPy
+### Scorched
 
-SolrPy is the Python module we will be using to get Django to talk to Solr. There are other, more complex modules but I find they obscure a lot of the work that Solr does in a way that makes it difficult to understand how to build a custom search system.
+`Scorched` is the Python module we will be using to get Django to talk to Solr. There are other, more complex modules but I find they obscure a lot of the work that Solr does in a way that makes it difficult to understand how to build a custom search system.
 
 The first thing we need to do is create a setting in our Django application where we can store the address of our Solr server. Open up `settings.py` and add the following line:
 
-`SOLR_SERVER = "http://localhost:8080/timekeeper-solr/"`
+`SOLR_SERVER = "http://localhost:8080/codekeeper-solr/"`
 
 We will use this setting when we need to work with Solr in our indexing and querying methods.
 
 ### Indexing Content
 
-Open up your `Activity` model file (`models/activity.py`). To start using Signals we will need to import some new methods at the top.
+Open up your `Snippet` model file (`models/snippet.py`). To start using Signals we will need to import some new methods at the top.
 
 Import the following:
 
@@ -193,64 +185,52 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 ```
 
-Now create a new function in this file. It should be its own function, and not part of the `Activity` model.
+Now create a new function in this file. It should be its own function, and not part of the `Snippet` model.
 
 ```
-@receiver(post_save, sender=Activity)
+@receiver(post_save, sender=Snippet)
 def solr_index(sender, instance, created, **kwargs):
     import uuid
     from django.conf import settings
-    import solr
+    import scorched
 
-    solrconn = solr.SolrConnection(settings.SOLR_SERVER)
-    record = solrconn.query("type:timekeeper_activity item_id:{0}".format(instance.id), q_op="AND")
-    if record:
-        solrconn.delete(record.results[0]['id'])
+    solrconn = scorched.SolrInterface(settings.SOLR_SERVER)
 
-    activity = instance
+    # check to see if any records with this type and id already exist in Solr (i.e., we're updating a record)
+    records = solrconn.query(type="snippet", item_id="{0}".format(instance.pk)).execute()
+    if records:
+        # if it exists, delete it before re-adding it.
+        solrconn.delete_by_ids([x['id'] for x in records])
+
     d = {
-        'type': 'timekeeper_activity',
         'id': str(uuid.uuid4()),
-        'item_id': activity.id,
-        'title': activity.title,
-        'start_time': activity.start_time,
-        'end_time': activity.end_time,
-        'created': activity.created,
-        'updated': activity.updated
+        'type': 'snippet',
+        'item_id': instance.pk,
+        'snippet': instance.snippet,
+        'title': instance.title
     }
-    solrconn.add(**d)
+
+    solrconn.add(d)
     solrconn.commit()
 ```
 
-Let's look at this method a bit more in-depth. The first line of this function is called a Python "decorator". Decorators are handy to know about, but for now it's enough to know that this function is what "registers" the following function for notifications. Notice that the `@receiver` takes two arguments: the notification it will listen for ([post_save](https://docs.djangoproject.com/en/dev/ref/signals/#post-save)), and the specific model that it listens for notifications from (`Activity`).
+Let's look at this method a bit more in-depth. The first line of this function, starting with an "@" sign, is called a Python "decorator". Decorators are handy to know about, but for now it's enough to know that this is what "registers" the `solr_index` function for notifications. Notice that the `@receiver` takes two arguments: the notification it will listen for ([post_save](https://docs.djangoproject.com/en/dev/ref/signals/#post-save)), and the specific model that it listens for notifications from (`Snippet`).
 
-This means that after an Activity record has been saved, this `solr_index` function will be called.
+This means that after an Snippet record has been saved, this `solr_index` function will be called.
 
-The `solr_index` function takes a number of parameters. The first is a reference to the sender, in this case the Activity model. The second is a reference to the specific `instance,` or record that was saved. The other arguments are optional and can be ignored for the moment.
+The `solr_index` function takes a number of parameters. The first is a reference to the sender, in this case the Snippet model. The second is a reference to the specific `instance,` or record that was saved. The other arguments are optional and can be ignored for the moment.
 
 The import lines are fairly self-explanatory. Notice that we are importing the `uuid` module to create universally unique IDs for our records.
 
 `solrconn` is the call that establishes a connection to our Solr server. We can use the setting from our `settings.py` that we created earlier.
 
-The next few lines will look for an existing record in our Solr system. If we are creating a new record, chances are it will not exist. However, if we are updating an older record the easiest way to deal with it is to delete the old record and then re-add a new one. By default, Solr uses an "OR" operator, so we must explicitly specify the "AND" query operator (`q_op`) for this operation.
+The next few lines will look for an existing record in our Solr system. If we are creating a new record, chances are it will not exist. However, if we are updating an older record the easiest way to deal with it is to delete the old record and then re-add a new one.
 
 Finally, we index the content. We create a key/value dictionary that contains the Solr field that we want to push content into, and the content from our activity instance that is being saved as the value. Notice that the keys in our dictionary match the fields that we established in our Solr schema.
 
-This is concluded by calling `add` to our Solr server to add the document to the Solr server. It uses a Python idiom that you may not be familiar with:
+This is concluded by calling `add` to our Solr server to add the document to the Solr server, and then a `commit()` call.
 
-`solrconn.add(**d)`
-
-What this call does is expands the keys and values from our dictionary into arguments for the function call. So:
-
-`d = {'title': "Jogging", "start_time": "2014-04-27T18:04:02Z"}`
-
-becomes:
-
-`solrconn.add(title="Jogging", start_time="2014-04-27T18:04:02Z")`
-
-I find it a very handy thing to use.
-
-Now that our indexing script is in place, let's test it out. Open a web browser and navigate to the Django admin interface. Add a new activity.
+Now that our indexing script is in place, let's test it out. Make sure your Django server is still running, open a web browser and navigate to the Django admin interface. Add a new snippet.
 
 Once you have added it, navigate to your Solr admin interface. Select "collection1" from the drop-down on the left, and then choose the "Query" option. You can leave everything the way it is, and click the "Execute Query" button.
 
@@ -258,7 +238,7 @@ You should see something like this:
 
 ![Figure 10](figures/figure10.png)
 
-Success! To get your previously-added activities into Solr you just need to go in and re-save them without changing anything. They will be automatically indexed as you save.
+Success! To get your previously-added snippets into Solr you just need to go in and re-save them without changing anything. They will be automatically indexed as you save.
 
 Proceed to do the same thing for your other two models. Remember that you *will* need to change the `type` field to match the record type. I use the pattern "appname_model", so "timekeeper_activity", "timekeeper_person", etc.
 
