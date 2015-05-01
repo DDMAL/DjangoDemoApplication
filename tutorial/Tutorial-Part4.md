@@ -240,20 +240,21 @@ You should see something like this:
 
 Success! To get your previously-added snippets into Solr you just need to go in and re-save them without changing anything. They will be automatically indexed as you save.
 
-Proceed to do the same thing for your other two models. Remember that you *will* need to change the `type` field to match the record type. I use the pattern "appname_model", so "timekeeper_activity", "timekeeper_person", etc.
+Proceed to do the same thing for your other two models. Remember that you *will* need to change the `type` field to match the record type.
 
 ### Deleting content
 
 When a record is created or modified, the `post_save` handler will automatically update the Solr record. However, if you should delete a record you will probably want to completely remove it from your Solr index. We will use another Django signal ([post_delete](https://docs.djangoproject.com/en/dev/ref/signals/#post-delete)) for this:
 
 ```
-@receiver(post_delete, sender=Activity)
-def solr_delete(sender, instance, **kwargs):
+@receiver(post_delete, sender=Snippet)
+def solr_index(sender, instance, created, **kwargs):
     from django.conf import settings
-    import solr
-    solrconn = solr.SolrConnection(settings.SOLR_SERVER)
-    record = solrconn.query("type:timekeeper_activity item_id:{0}".format(instance.id), q_op="AND")
-    solrconn.delete(record.results[0]['id'])
+    import scorched
+
+    solrconn = scorched.SolrInterface(settings.SOLR_SERVER)
+    records = solrconn.query(type="snippet", item_id="{0}".format(instance.pk)).execute()
+    solrconn.delete_by_ids([x['id'] for x in records])
     solrconn.commit()
 ```
 
@@ -262,6 +263,20 @@ Be sure to import the `post_delete` signal at the top:
 `from django.db.models.signals import post_save, post_delete`
 
 Again, do this for every one of your models, changing the field names where appropriate.
+
+### Multifaceted Tags
+
+Remember that our `tags` field is a Many-to-many relationship? If you were sharp, you would have seen that, when we defined the Solr fields above, we put in the following definition for the `tags` field:
+
+    <field name="tags" type="string" indexed="true" stored="true" multiValued="true" />
+
+The `multiValued="true"` parameter specifies that this particular field can accept multiple values; in our case, a list of tags, where each tag is a string.
+
+To index this, however, we need to grab the tag names from our many-to-many relationship prior to sending them to Solr. We can do this by adding a small list comprehension to build an array of tag names on the field in our indexing code:
+
+    ...
+    'tags': [tag.name for tag in instance.tags.all()],
+    ...
 
 # Wrapping up
 
@@ -301,9 +316,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
 
-from timekeeper.serializers.search import SearchSerializer
-from timekeeper.renderers.custom_html_renderer import CustomHTMLRenderer
-from timekeeper.helpers.solrsearch import SolrSearch
+from codekeeper.serializers.search import SearchSerializer
+from codekeeper.renderers.custom_html_renderer import CustomHTMLRenderer
+from codekeeper.helpers.solrsearch import SolrSearch
 
 
 class SearchViewHTMLRenderer(CustomHTMLRenderer):

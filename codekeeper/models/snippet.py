@@ -1,6 +1,6 @@
 from django.db import models
 from django.dispatch import receiver
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 
 
 class Snippet(models.Model):
@@ -38,6 +38,7 @@ def solr_index(sender, instance, created, **kwargs):
         'id': str(uuid.uuid4()),
         'type': 'snippet',
         'item_id': instance.pk,
+        'tags': [tag.name for tag in instance.tags.all()],
         'snippet': instance.snippet,
         'title': instance.title,
         'created': instance.created,
@@ -46,3 +47,15 @@ def solr_index(sender, instance, created, **kwargs):
 
     solrconn.add(d)
     solrconn.commit()
+
+
+@receiver(post_delete, sender=Snippet)
+def solr_delete(sender, instance, **kwargs):
+    from django.conf import settings
+    import scorched
+
+    solrconn = scorched.SolrInterface(settings.SOLR_SERVER)
+    records = solrconn.query(type="snippet", item_id="{0}".format(instance.pk)).execute()
+    solrconn.delete_by_ids([x['id'] for x in records])
+    solrconn.commit()
+
