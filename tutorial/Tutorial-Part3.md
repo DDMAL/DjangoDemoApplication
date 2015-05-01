@@ -148,20 +148,22 @@ This sets up our homepage view, which we will eventually hook up in our `urls.py
 For now, let's use a very simple HTML5 template. Create a new file in your `templates` directory called "base.html". In it put the following code:
 
 ```
+{% load staticfiles %}
+
 <!doctype html>
 
 <html lang="en">
 <head>
   <meta charset="utf-8">
 
-  <title>Time Keeper: Keep Your Time</title>
+  <title>Code Keeper Snippets</title>
 
-  <link rel="stylesheet" href="{{ STATIC_URL }}css/styles.css">
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 
   <!--[if lt IE 9]>
   <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
   <![endif]-->
-  <script src="{{ STATIC_URL }}js/scripts.js"></script>
+  <script src="{% static 'js/scripts.js' %}"></script>
 </head>
 
 <body>
@@ -674,6 +676,7 @@ To hook these up we just edit our `base.html` file and import the files.
 Edit your `base.html` file to include these files like this:
 
 ```
+{% load staticfiles %}
 <!DOCTYPE html>
 
 <html lang="en">
@@ -681,9 +684,9 @@ Edit your `base.html` file to include these files like this:
     <meta charset="utf-8">
 
     <title>Code Keeper Snippets</title>
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap.css">
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap-theme.css">
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/styles.css">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bootstrap-theme.css' %}">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 
 <body>
@@ -691,7 +694,7 @@ Edit your `base.html` file to include these files like this:
     <div class="page-header">
         <div class="row">
             <div class="col-lg-2">
-                <img src="{{ STATIC_URL }}img/codekeeper.png" />
+                <img src="{% static 'img/codekeeper.png' %}" />
             </div>
             <div class="col-lg-10">
                 <h1>CodeKeeper</h1>
@@ -703,12 +706,12 @@ Edit your `base.html` file to include these files like this:
 
     {% endblock %}
 </div>
-<script src="{{ STATIC_URL }}js/jquery.min.js"></script>
-<script src="{{ STATIC_URL }}js/bootstrap.min.js"></script>
+<script src="{% static 'js/jquery.min.js' %}"></script>
+<script src="{% static 'js/bootstrap.min.js' %}"></script>
 <!--[if lt IE 9]>
 <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
 <![endif]-->
-<script src="{{ STATIC_URL }}js/scripts.js"></script>
+<script src="{% static 'js/scripts.js' %}"></script>
 
 </body>
 </html>
