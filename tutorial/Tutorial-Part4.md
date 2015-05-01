@@ -311,29 +311,27 @@ What the code in these files do will become apparent later.
 Next, let's create our search view and map it in our URLs file. Create a new file, `views/search.py`:
 
 ```python
-from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.renderers import JSONRenderer, JSONPRenderer
+from rest_framework.renderers import JSONRenderer
 
 from codekeeper.serializers.search import SearchSerializer
 from codekeeper.renderers.custom_html_renderer import CustomHTMLRenderer
-from codekeeper.helpers.solrsearch import SolrSearch
-
 
 class SearchViewHTMLRenderer(CustomHTMLRenderer):
     template_name = "search/search.html"
 
 
-class SearchView(APIView):
+class SearchView(GenericAPIView):
     serializer_class = SearchSerializer
-    renderer_classes = (JSONRenderer, JSONPRenderer, SearchViewHTMLRenderer)
+    renderer_classes = (JSONRenderer, SearchViewHTMLRenderer)
 ```
 
 This should look familiar -- it is the same structure we created for our other views. Notice that we're using the same `CustomHTMLRenderer` helper, and we reference a few files and classes we have not created yet. We'll get to these in a moment, but first we will connect this view up in our `urls.py` file. Add a new URL mapping:
 
 ```python
-from timekeeper.views.search import SearchView
+from codekeeper.views.search import SearchView
 ...
 url(r'^search/$', SearchView.as_view(), name="search-view"),
 ...
@@ -409,10 +407,10 @@ Uh oh! What does this mean?
 
 To understand what's going on here, we'll retun to our previous conversation about REST, and how the HTTP methods can be used to manage interaction between the client and the server.
 
-It turns out that there are a lot of "hidden" methods on our previous views that we took for granted. If you have a look at your previous views, you will see that we're sub-classing a different view than the one that we're subclassing in our `SearchView` class. For example:
+It turns out that there are a lot of "hidden" methods in our other views that we took for granted. If you have a look at your previous views, you will see that we're sub-classing a different view than the one that we're subclassing in our `SearchView` class. For example:
 
 ```python
-class ActivityList(generics.ListCreateAPIView):
+class SnippetList(generics.ListCreateAPIView):
 ```
 
 The advantage of subclassing these helper classes is that we can rely on their default behaviour for mapping an incoming request to a Python method to handle that request. In other words, if a view receives a `GET` request, it can send it off to a pre-built `get()` method on our class; a `POST` request would be sent off to a `post()` method, and so on.
@@ -432,9 +430,9 @@ Now, let's load our search page:
 
 That's better!
 
-If you type something in to your search field and press the search button, you won't see anything spectacular. However, you should notice that the URL in your browser changes slightly. If I type "jogging" into the search field and click "search", my URL changes to this:
+If you type something in to your search field and press the search button, you won't see anything spectacular. However, you should notice that the URL in your browser changes slightly. If I type "python" into the search field and click "search", my URL changes to this:
 
-`http://localhost:8000/search/?q=jogging`
+`http://localhost:8000/search/?q=python`
 
 We can use this to start passing on search terms to Solr.
 
@@ -446,14 +444,13 @@ To start performing searches on our data, we'll need to modify the behaviour of 
     def get(self, request, *args, **kwargs):
         querydict = request.GET
         if not querydict:
-            return Response({'results': []})
+            return Response({"results": []})
 
-        s = SolrSearch(request)
-
-        search_results = s.search()
-        result = {'results': search_results}
-        response = Response(result)
-        return response
+        solrconn = scorched.SolrInterface(settings.SOLR_SERVER)
+        resp = solrconn.query(title=querydict.get('q')).execute()
+        records = [r for r in resp]
+        s = self.get_serializer(records, many=True)
+        return Response(s.data)
 ```
 
 There's a lot of stuff here, so let's go through this statement-by-statement.
