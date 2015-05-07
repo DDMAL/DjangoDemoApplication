@@ -463,7 +463,7 @@ solrconn = scorched.SolrInterface(settings.SOLR_SERVER)
 resp = solrconn.query(title=querydict.get('q')).execute()
 ```
 
-This uses Scorched to query Solr and returns *TODO what all does it return again*?
+This uses Scorched to query Solr and returns the list of results.
 
 ```python
 records = [r for r in resp]
