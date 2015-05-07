@@ -298,17 +298,7 @@ Our system provides methods for using both human (HTML) interfaces, as well as A
 
 ## Setting up
 
-Let's begin by pulling in some helper code that I've written to help manage the communication between our web application and Solr. Create a new folder in your project and call it "helpers." Don't forget to add an `__init__.py` file so that we can import from the files in it.
-
-You can add three files in this folder from `http://github.com/DDMAL/DjangoDemoApplication/`:
-
- * `json_response.py`
- * `paginate.py`
- * `solrsearch.py`
-
-What the code in these files do will become apparent later.
-
-Next, let's create our search view and map it in our URLs file. Create a new file, `views/search.py`:
+Let's create our search view and map it in our URLs file. Create a new file, `views/search.py`:
 
 ```python
 from rest_framework.generics import GenericAPIView
@@ -338,6 +328,8 @@ url(r'^search/$', SearchView.as_view(), name="search-view"),
 ```
 
 Now we can get to creating the missing code we referenced in our view. Let's create the SearchSerializer by creating a new file, `serializers/search.py` and adding the following code:
+
+> **Will:** Not sure if we need this. Typically, serializers sit between the model and the view. But we're getting data from Solr here, so we might not need to touch the models at all. If all we're doing is tweaking Solr's output before returning the response, I'm not sure plugging the code for doing that into the Serializer architecture is useful.
 
 ```python
 from rest_framework import serializers
@@ -466,30 +458,26 @@ if not querydict:
 
 This statement defines the behaviour of the page if there are no query parameters, i.e., the user is just visiting the search page, and not actually performing a search. This statement sends a `Response` object back with an empty `results` object, which our template knows how to render.
 
-`s = SolrSearch(request)`
-
-This is a big one. Remember the file we created previously, `helpers/solrsearch.py`? This is a helper method for performing a search against a Solr server. Open this file and have a look at the `SolrSearch` class.
-
-When this class is initialized it takes a `request` object and parses out the query strings (L67) from the request. Query strings are everything that comes after a `?` in a URL. Initializing this class with the request method parses the request and prepares it for executing a search.
-
-`s.search()`
-
-This executes the search, using the query parameters. We can modify the behaviour of this search by passing in optional parameters, but for now we'll use the default behaviour.
-
-`result = {'results': search_results}`
-
-This creates a 'results' dictionary that contains the search results. This is in preparation for sending it back to the template layer to be rendered.
-
 ```python
-response = Response(result)
-return response
+solrconn = scorched.SolrInterface(settings.SOLR_SERVER)
+resp = solrconn.query(title=querydict.get('q')).execute()
 ```
 
-Finally we wrap the search results in a `Response` object and send it back to the client.
+This uses Scorched to query Solr and returns the list of results.
 
-To test our query system, you can place an asterisk ('wildcard') in the search field and it should retrieve all of the records you have indexed in Solr. We have the beginnings of our search interface!
+```python
+records = [r for r in resp]
+s = self.get_serializer(records, many=True)
+return Response(s.data)
+```
+
+Finally, we use the `SearchSerializer` we *[might have]* defined earlier to prepare the search results, wrap them in a `Response` object, and send the response back to the client.
+
+To test our query system, you can write the title of a snippet you defined earlier and solr will return it. We have the beginnings of our search interface!
 
 Let's also try this on our command-line cURL interface:
+
+*[This is not actually what you'll get, but maybe something similar.]*
 
 ```bash
 $> curl -XGET -H "Accept: application/json" "http://localhost:8000/search/?q=*"
@@ -510,8 +498,6 @@ $> curl -XGET -H "Accept: application/json" "http://localhost:8000/search/?q=*"
     ]
 }
 ```
-
-Looks good! Notice that this is a record for a `timekeeper_activity` object, with an ID #3. All of the fields are being retrieved, though.
 
 ## Customizing the search fields
 
@@ -834,4 +820,4 @@ Looks like it works! Notice that our facets on the side automatically update the
 
 This was translated using our `SolrSearch` helper class to execute a search for all records where the last name matched "Kringle." We only have one example in here now, so we're only seeing one record.
 
-With that, it's time to wrap up our tutorial. Part 4 of this tutorial will re-cap what we've learned
+With that, it's time to wrap up our tutorial. Part 5 of this tutorial will re-cap what we've learned.
