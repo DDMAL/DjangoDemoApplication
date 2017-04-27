@@ -6,7 +6,7 @@ class Book(models.Model):
         app_label = "books"
 
     title = models.CharField(max_length=255)
-    author = models.ForeignKey("books.Author")
+    author = models.ForeignKey("books.Author", related_name="books")
 
     def __str__(self):
         return "{0}".format(self.title)
