@@ -1,3 +1,7 @@
 {% block body %}
-    Author List
+    <ul>
+    {% for author in content %}
+        <li><a href="{{ author.url }}">{{ author.last_name }}, {{ author.first_name }}</a></li>
+    {% endfor %}
+    </ul>
 {% endblock %}

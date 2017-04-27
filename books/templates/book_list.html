@@ -1,3 +1,7 @@
 {% block body %}
-    Book List
+    <ul>
+    {% for book in content %}
+        <li><a href="{{ book.url }}">{{ book.title }}</a></li>
+    {% endfor %}
+    </ul>
 {% endblock %}
