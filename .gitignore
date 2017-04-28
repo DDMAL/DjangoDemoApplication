@@ -60,6 +60,7 @@ app_env/*
 target/*
 
 solr/target/*
+solr/data/*
 
 **/__pycache__/*
 /venv
