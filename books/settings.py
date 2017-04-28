@@ -108,6 +108,8 @@ REST_FRAMEWORK = {
     ),
 }
 
+SOLR_SERVER = "http://localhost:8983/solr/booksearch"
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
