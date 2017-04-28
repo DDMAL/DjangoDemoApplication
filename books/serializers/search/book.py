@@ -5,9 +5,10 @@ from books.models.book import Book
 class BookSearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
+        fields = ('title_s', 'author_s', 'pk', 'type')
 
     title_s = serializers.CharField(source="title")
-    author = serializers.CharField(source="author.last_name")
+    author_s = serializers.CharField(source="author.last_name")
     pk = serializers.IntegerField(source="id")
     type = serializers.SerializerMethodField()
 
