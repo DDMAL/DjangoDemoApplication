@@ -4,9 +4,7 @@ import { Provider } from "react-redux";
 import App from "./app";
 import configureStore from "./store";
 
-let INITIAL_STATE = {
-    foo: "bar"
-};
+let INITIAL_STATE = {};
 
 let myStore = configureStore(INITIAL_STATE);
 
