@@ -1,4 +1,5 @@
 import React from "react";
+import { connect } from "react-redux";
 import {
     updateCurrentQueryTerm,
     performSearch
@@ -11,8 +12,8 @@ class SearchBar extends React.Component
     {
         console.log(event.target.value);
 
-        updateCurrentQueryTerm(event.target.value);
-        performSearch(event.target.value);
+        this.props.updateCurrentQueryTerm(event.target.value);
+        this.props.performSearch(event.target.value);
     }
 
     render ()
@@ -28,4 +29,16 @@ class SearchBar extends React.Component
     }
 }
 
-export default SearchBar;
+function mapStateToProps (state)
+{
+    return {
+        currentQuery: state.currentQuery
+    }
+}
+
+const mapDispatchToProps = {
+    updateCurrentQueryTerm,
+    performSearch
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(SearchBar);
