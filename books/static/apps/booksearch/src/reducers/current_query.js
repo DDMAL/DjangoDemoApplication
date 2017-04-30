@@ -11,7 +11,7 @@ export default function currentQuery (state = INITIAL_STATE, action)
     switch (action.type)
     {
         case (UPDATE_CURRENT_QUERY_TERM):
-            return "";
+            return action.query;
         case (CLEAR_CURRENT_QUERY):
             return INITIAL_STATE;
         default:
