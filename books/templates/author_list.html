@@ -1,4 +1,5 @@
 {% block body %}
+    <h2>Browse Authors</h2>
     <ul>
     {% for author in content %}
         <li><a href="{{ author.url }}">{{ author.last_name }}, {{ author.first_name }}</a></li>
