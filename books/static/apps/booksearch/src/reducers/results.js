@@ -2,7 +2,7 @@ import {
     UPDATE_SEARCH_RESULTS
 } from "../constants";
 
-const INITIAL_STATE = null;
+const INITIAL_STATE = [];
 
 export default function results (state = INITIAL_STATE, action)
 {
