@@ -1,0 +1,8 @@
+{% block body %}
+    <h2>Book Browse</h2>
+    <p><a href="{% url 'search-view' %}">Search the database</a></p>
+    <ul>
+        <li>Browse by <a href="{% url 'author-list' %}">Author</a></li>
+        <li>Browse by <a href="{% url 'book-list' %}">Book Title</a></li>
+    </ul>
+{% endblock %}
