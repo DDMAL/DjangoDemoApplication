@@ -9,7 +9,7 @@ export default function results (state = INITIAL_STATE, action)
     switch (action.type)
     {
         case (UPDATE_SEARCH_RESULTS):
-            return [{"dummy": "result"}];
+            return action.results;
         default:
             return state;
     }
