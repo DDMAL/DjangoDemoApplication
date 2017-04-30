@@ -9,6 +9,7 @@ class App extends React.Component
     {
         return (
             <div>
+                <h3>Search Books and Authors</h3>
                 <div className="page-header">
                     <SearchBar />
                 </div>
