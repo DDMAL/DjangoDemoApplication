@@ -10,11 +10,9 @@ const SERVER_BASE_URL = "http://localhost:8000/search/";
 
 export function performSearch (query)
 {
-    console.log("Performing Search for " + query);
-
     return (dispatch) =>
     {
-        let querystring = query ? `?${query}` : "";
+        let querystring = query ? `?q=${query}` : "";
 
         return fetch(`${SERVER_BASE_URL}${querystring}`, {
             headers: {
