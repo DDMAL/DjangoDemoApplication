@@ -6,7 +6,11 @@ import {
 const INITIAL_STATE = "";
 
 
+<<<<<<< HEAD
 export default function currentQuery (state = INITIAL_STATE, action)
+=======
+export default function currentQuery(state = INITIAL_STATE, action)
+>>>>>>> resolve
 {
     switch (action.type)
     {

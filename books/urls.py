@@ -19,6 +19,7 @@ from books.views.index import IndexView
 from books.views.author import AuthorsListView, AuthorsDetailView
 from books.views.book import BooksListView, BooksDetailView
 from books.views.search import SearchView
+from books.views.index import IndexView
 
 urlpatterns = [
     url(r'^$', IndexView.as_view(), name="index"),

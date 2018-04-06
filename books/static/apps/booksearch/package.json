@@ -13,16 +13,27 @@
     "react-dom": "^15.5.4",
     "react-redux": "^5.0.4",
     "redux": "^3.6.0",
+<<<<<<< HEAD
+=======
+    "redux-logger": "^3.0.1",
+>>>>>>> resolve
     "redux-thunk": "^2.2.0",
     "whatwg-fetch": "^2.0.3"
   },
   "devDependencies": {
+<<<<<<< HEAD
+=======
+    "babel-core": "^6.24.1",
+>>>>>>> resolve
     "babel-loader": "^7.0.0",
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-1": "^6.24.1",
+<<<<<<< HEAD
     "redux-logger": "^3.0.1",
+=======
+>>>>>>> resolve
     "webpack": "^2.4.1"
   }
 }

@@ -20,9 +20,14 @@ def index_author(sender, instance, created, **kwargs):
 
 
 @receiver(post_delete, sender=Author)
+<<<<<<< HEAD
 def delete_book(sender, instance, **kwargs):
     connection = pysolr.Solr(settings.SOLR_SERVER)
     existing = connection.search("*:*", fq=["type:author", "pk:{0}".format(instance.pk)])
     if existing.hits > 0:
         for doc in existing.docs:
             connection.delete(id="{0}".format(doc['id']))
+=======
+def delete_author(sender, instance, **kwargs):
+    pass
+>>>>>>> resolve

@@ -8,7 +8,13 @@ class Results extends React.Component
     render ()
     {
         if (this.props.results.length === 0)
+<<<<<<< HEAD
             return null;
+=======
+        {
+            return null;
+        }
+>>>>>>> resolve
 
         return (
             <div>
@@ -17,7 +23,11 @@ class Results extends React.Component
                     return <Result result={ thisResult } key={ idx } />
                 })}
             </div>
+<<<<<<< HEAD
         )
+=======
+        );
+>>>>>>> resolve
     }
 }
 

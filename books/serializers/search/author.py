@@ -5,7 +5,11 @@ from books.models.author import Author
 class AuthorSearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Author
+<<<<<<< HEAD
         fields = ('first_name_s', 'last_name_s', 'pk', 'type')
+=======
+        fields = ("first_name_s", "last_name_s", "pk", "type")
+>>>>>>> resolve
 
     first_name_s = serializers.CharField(source="first_name")
     last_name_s = serializers.CharField(source="last_name")

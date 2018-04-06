@@ -9,16 +9,24 @@ class App extends React.Component
     {
         return (
             <div>
+<<<<<<< HEAD
                 <h3>Search Books and Authors</h3>
+=======
+>>>>>>> resolve
                 <div className="page-header">
                     <SearchBar />
                 </div>
                 <div className="page-results">
                     <Results />
                 </div>
+<<<<<<< HEAD
 
             </div>
         )
+=======
+            </div>
+        );
+>>>>>>> resolve
     }
 }
 

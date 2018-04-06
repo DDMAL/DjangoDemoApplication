@@ -38,6 +38,7 @@
     <!-- copyfields go here -->
     <!-- provides fulltext search on these components -->
     <copyField source="*_s" dest="text" />
+    <copyField source="*_ss" dest="text" />
 
     <!-- field definitions -->
     <fieldType name="uuid" class="solr.UUIDField" indexed="true" />

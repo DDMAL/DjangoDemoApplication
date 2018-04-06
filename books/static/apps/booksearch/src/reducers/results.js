@@ -4,7 +4,12 @@ import {
 
 const INITIAL_STATE = [];
 
+<<<<<<< HEAD
 export default function results (state = INITIAL_STATE, action)
+=======
+
+export default function results(state = INITIAL_STATE, action)
+>>>>>>> resolve
 {
     switch (action.type)
     {
