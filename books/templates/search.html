@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body %}
+    <div id="content"></div>
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{% static "apps/booksearch/dist/bundle.js" %}">
+    </script>
+{% endblock %}

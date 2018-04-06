@@ -6,4 +6,4 @@ class BooksAppConfig(AppConfig):
     verbose_name = "Books"
 
     def ready(self):
-        pass
+        import books.signals
